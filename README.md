@@ -23,11 +23,11 @@ A comprehensive invoice management system designed for small and medium business
 
 ### Frontend
 
-- React with TypeScript
-- Vite
-- React Query for server state
-- Zustand for local state
-- React Router for navigation
+- Next.js 16 with React
+- TypeScript
+- Tailwind CSS
+- Axios for API calls
+- shadcn/ui components
 
 ## Getting Started
 
@@ -35,46 +35,74 @@ A comprehensive invoice management system designed for small and medium business
 
 - Node.js 18+
 - PostgreSQL database
+- pnpm (for frontend) or npm
 
 ### Installation
 
 1. Clone the repository
-2. Install dependencies:
 
-```bash
-npm run install:all
-```
-
-3. Set up database:
+2. Install backend dependencies:
 
 ```bash
 cd backend
-# Create .env file with your DATABASE_URL
-cp .env.example .env
-# Edit .env with your database credentials
+npm install
+```
 
-# Run migrations
+3. Set up backend environment:
+
+```bash
+# Create .env file with your DATABASE_URL
+# Example:
+# DATABASE_URL="postgresql://user:password@localhost:5432/invomax"
+# PORT=8080
+# JWT_SECRET="your-secret-key"
+# FRONTEND_URL="http://localhost:3000"
+```
+
+4. Run database migrations:
+
+```bash
 npm run db:migrate
 ```
 
-4. Start development servers:
-
-Backend:
+5. Install frontend dependencies:
 
 ```bash
-npm run dev:backend
+cd ../frontend
+pnpm install
+# or npm install
 ```
 
-Frontend (in a new terminal):
+6. Set up frontend environment (optional):
 
 ```bash
-npm run dev:frontend
+# Create .env.local file if needed
+# NEXT_PUBLIC_API_URL="http://localhost:8080"
 ```
 
-The application will be available at:
+## Running the Application
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:3000
+### Start Backend Server
+
+In the `backend` directory:
+
+```bash
+npm run dev
+```
+
+The backend API will be available at: `http://localhost:8080`
+
+### Start Frontend Server
+
+In a **separate terminal**, navigate to the `frontend` directory:
+
+```bash
+cd frontend
+npm run dev
+# or pnpm dev
+```
+
+The frontend application will be available at: `http://localhost:3000`
 
 ## Project Structure
 
@@ -87,18 +115,19 @@ The application will be available at:
 │   │   │   ├── company/
 │   │   │   ├── client/
 │   │   │   ├── item/
-│   │   │   └── invoice/
+│   │   │   ├── invoice/
+│   │   │   └── settings/
 │   │   └── shared/         # Shared utilities
 │   │       ├── config/
+│   │       ├── db/         # Prisma client singleton
 │   │       ├── middleware/
 │   │       └── tax-calculator/
-│   └── prisma/             # Database schema
+│   └── prisma/             # Database schema and migrations
 └── frontend/
-    └── src/
-        ├── api/            # API client
-        ├── components/     # React components
-        ├── pages/          # Page components
-        └── store/          # Zustand stores
+    ├── app/                # Next.js app router pages
+    ├── components/         # React components
+    ├── lib/                # Utilities and API client
+    └── hooks/              # Custom React hooks
 ```
 
 ## API Endpoints
@@ -136,6 +165,13 @@ The application will be available at:
 - `GET /api/invoices/:id` - Get invoice details
 - `PATCH /api/invoices/:id` - Update invoice
 - `DELETE /api/invoices/:id` - Delete invoice
+- `GET /api/invoices/:id/pdf` - Generate PDF
+
+### Settings
+
+- `GET /api/settings` - Get user and company settings
+- `POST /api/settings/logo` - Upload company logo
+- `DELETE /api/settings/logo` - Delete company logo
 
 ## Development Notes
 
@@ -143,6 +179,8 @@ The application will be available at:
 - Tax calculation automatically handles CGST/SGST (intra-state) vs IGST (inter-state)
 - Invoices are soft-deleted for audit trail
 - Invoice numbers are auto-generated per company with configurable prefix
+- Backend uses a singleton PrismaClient instance for connection pooling optimization
+- Frontend connects to backend via `NEXT_PUBLIC_API_URL` environment variable (defaults to `http://localhost:8080`)
 
 ## License
 

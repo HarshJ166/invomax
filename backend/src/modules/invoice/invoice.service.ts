@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../shared/db/prisma.js';
 import { TaxCalculator } from '../../shared/tax-calculator/tax-calculator.js';
 import { createError } from '../../shared/middleware/error-handler.js';
-
-const prisma = new PrismaClient();
 
 export interface CreateInvoiceDto {
   clientId: string;
@@ -12,11 +10,24 @@ export interface CreateInvoiceDto {
     itemId?: string;
     name: string;
     hsnCode?: string;
+    batch?: string;
     quantity: number;
     rate: number;
     taxRate: number;
   }>;
   notes?: string;
+  eWayBillNo?: string;
+  deliveryNote?: string;
+  modeTermsOfPayment?: string;
+  supplierRef?: string;
+  otherReferences?: string;
+  buyerOrderNo?: string;
+  buyerOrderDate?: string;
+  despatchDocumentNo?: string;
+  deliveryNoteDate?: string;
+  despatchedThrough?: string;
+  destination?: string;
+  termsOfDelivery?: string;
 }
 
 export interface UpdateInvoiceDto {
@@ -26,6 +37,18 @@ export interface UpdateInvoiceDto {
   status?: string;
   items?: CreateInvoiceDto['items'];
   notes?: string;
+  eWayBillNo?: string;
+  deliveryNote?: string;
+  modeTermsOfPayment?: string;
+  supplierRef?: string;
+  otherReferences?: string;
+  buyerOrderNo?: string;
+  buyerOrderDate?: string;
+  despatchDocumentNo?: string;
+  deliveryNoteDate?: string;
+  despatchedThrough?: string;
+  destination?: string;
+  termsOfDelivery?: string;
 }
 
 export class InvoiceService {
@@ -72,11 +95,24 @@ export class InvoiceService {
           totalAmount: taxBreakdown.total,
           taxAmount: taxBreakdown.cgst + taxBreakdown.sgst + taxBreakdown.igst,
           notes: data.notes,
+          eWayBillNo: data.eWayBillNo,
+          deliveryNote: data.deliveryNote,
+          modeTermsOfPayment: data.modeTermsOfPayment,
+          supplierRef: data.supplierRef,
+          otherReferences: data.otherReferences,
+          buyerOrderNo: data.buyerOrderNo,
+          buyerOrderDate: data.buyerOrderDate ? new Date(data.buyerOrderDate) : null,
+          despatchDocumentNo: data.despatchDocumentNo,
+          deliveryNoteDate: data.deliveryNoteDate ? new Date(data.deliveryNoteDate) : null,
+          despatchedThrough: data.despatchedThrough,
+          destination: data.destination,
+          termsOfDelivery: data.termsOfDelivery,
           items: {
             create: data.items.map((item) => ({
               itemId: item.itemId,
               name: item.name,
               hsnCode: item.hsnCode,
+              batch: item.batch,
               quantity: item.quantity,
               rate: item.rate,
               taxRate: item.taxRate,
@@ -89,6 +125,7 @@ export class InvoiceService {
           client: true,
           items: { include: { item: true } },
           template: true,
+          company: true,
         },
       });
 
@@ -212,6 +249,18 @@ export class InvoiceService {
       totalAmount?: number;
       taxAmount?: number;
       notes?: string;
+      eWayBillNo?: string;
+      deliveryNote?: string;
+      modeTermsOfPayment?: string;
+      supplierRef?: string;
+      otherReferences?: string;
+      buyerOrderNo?: string;
+      buyerOrderDate?: Date | null;
+      despatchDocumentNo?: string;
+      deliveryNoteDate?: Date | null;
+      despatchedThrough?: string;
+      destination?: string;
+      termsOfDelivery?: string;
     } = {};
 
     if (data.status) {
@@ -261,6 +310,43 @@ export class InvoiceService {
       updateData.notes = data.notes;
     }
 
+    if (data.eWayBillNo !== undefined) {
+      updateData.eWayBillNo = data.eWayBillNo;
+    }
+    if (data.deliveryNote !== undefined) {
+      updateData.deliveryNote = data.deliveryNote;
+    }
+    if (data.modeTermsOfPayment !== undefined) {
+      updateData.modeTermsOfPayment = data.modeTermsOfPayment;
+    }
+    if (data.supplierRef !== undefined) {
+      updateData.supplierRef = data.supplierRef;
+    }
+    if (data.otherReferences !== undefined) {
+      updateData.otherReferences = data.otherReferences;
+    }
+    if (data.buyerOrderNo !== undefined) {
+      updateData.buyerOrderNo = data.buyerOrderNo;
+    }
+    if (data.buyerOrderDate !== undefined) {
+      updateData.buyerOrderDate = data.buyerOrderDate ? new Date(data.buyerOrderDate) : null;
+    }
+    if (data.despatchDocumentNo !== undefined) {
+      updateData.despatchDocumentNo = data.despatchDocumentNo;
+    }
+    if (data.deliveryNoteDate !== undefined) {
+      updateData.deliveryNoteDate = data.deliveryNoteDate ? new Date(data.deliveryNoteDate) : null;
+    }
+    if (data.despatchedThrough !== undefined) {
+      updateData.despatchedThrough = data.despatchedThrough;
+    }
+    if (data.destination !== undefined) {
+      updateData.destination = data.destination;
+    }
+    if (data.termsOfDelivery !== undefined) {
+      updateData.termsOfDelivery = data.termsOfDelivery;
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       if (data.items) {
         await tx.invoiceItem.deleteMany({
@@ -273,6 +359,7 @@ export class InvoiceService {
             itemId: item.itemId,
             name: item.name,
             hsnCode: item.hsnCode,
+            batch: item.batch,
             quantity: item.quantity,
             rate: item.rate,
             taxRate: item.taxRate,

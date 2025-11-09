@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../shared/db/prisma.js';
 import { createError } from '../../shared/middleware/error-handler.js';
-
-const prisma = new PrismaClient();
 
 export interface CreateItemDto {
   name: string;

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import { config } from './shared/config/config.js';
 import { errorHandler } from './shared/middleware/error-handler.js';
 import { authRouter } from './modules/auth/auth.router.js';
@@ -9,6 +10,7 @@ import { companyRouter } from './modules/company/company.router.js';
 import { clientRouter } from './modules/client/client.router.js';
 import { itemRouter } from './modules/item/item.router.js';
 import { invoiceRouter } from './modules/invoice/invoice.router.js';
+import { settingsRouter } from './modules/settings/settings.router.js';
 
 const app = express();
 
@@ -32,6 +34,8 @@ app.use('/api/companies', companyRouter);
 app.use('/api/clients', clientRouter);
 app.use('/api/items', itemRouter);
 app.use('/api/invoices', invoiceRouter);
+app.use('/api/settings', settingsRouter);
+app.use('/uploads', express.static(path.join(process.cwd(), config.uploadDir)));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -39,7 +43,7 @@ app.get('/api/health', (req, res) => {
 
 app.use(errorHandler);
 
-const PORT = config.port || 3000;
+const PORT = config.port;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

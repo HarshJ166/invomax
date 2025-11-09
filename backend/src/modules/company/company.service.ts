@@ -1,12 +1,13 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../shared/db/prisma.js';
 import { createError } from '../../shared/middleware/error-handler.js';
-
-const prisma = new PrismaClient();
 
 export interface UpdateCompanyDto {
   name?: string;
   gstin?: string;
   address?: string;
+  email?: string;
+  state?: string;
+  stateCode?: string;
   logoUrl?: string;
   settingsJson?: Record<string, unknown>;
 }
@@ -37,6 +38,9 @@ export class CompanyService {
         name: data.name,
         gstin: data.gstin,
         address: data.address,
+        email: data.email,
+        state: data.state,
+        stateCode: data.stateCode,
         logoUrl: data.logoUrl,
         settingsJson: data.settingsJson,
       },

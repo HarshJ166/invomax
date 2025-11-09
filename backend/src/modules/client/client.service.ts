@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../shared/db/prisma.js';
 import { createError } from '../../shared/middleware/error-handler.js';
-
-const prisma = new PrismaClient();
 
 export interface CreateClientDto {
   name: string;
@@ -9,6 +7,7 @@ export interface CreateClientDto {
   billingAddress?: string;
   shippingAddress?: string;
   state?: string;
+  stateCode?: string;
 }
 
 export interface UpdateClientDto {
@@ -17,6 +16,7 @@ export interface UpdateClientDto {
   billingAddress?: string;
   shippingAddress?: string;
   state?: string;
+  stateCode?: string;
 }
 
 export class ClientService {

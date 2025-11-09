@@ -30,6 +30,9 @@ model Company {
   name        String
   gstin       String?  @unique
   address     String?
+  email       String?
+  state       String?
+  stateCode   String?  @map("state_code")
   logoUrl     String?  @map("logo_url")
   settingsJson Json?   @map("settings_json") @db.JsonB
   createdAt   DateTime @default(now()) @map("created_at")
@@ -54,6 +57,7 @@ model Client {
   billingAddress  String?  @map("billing_address")
   shippingAddress String?  @map("shipping_address")
   state         String?
+  stateCode     String?  @map("state_code")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
@@ -101,19 +105,31 @@ model InvoiceTemplate {
 }
 
 model Invoice {
-  id          String   @id @default(uuid())
-  companyId   String   @map("company_id")
-  clientId    String   @map("client_id")
-  templateId  String?  @map("template_id")
-  invoiceNo   String   @map("invoice_no")
-  date        DateTime @db.Date
-  status      String   @default("draft")
-  totalAmount Decimal  @map("total_amount") @db.Decimal(10, 2)
-  taxAmount   Decimal  @default(0) @map("tax_amount") @db.Decimal(10, 2)
-  notes       String?  @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id                String   @id @default(uuid())
+  companyId         String   @map("company_id")
+  clientId          String   @map("client_id")
+  templateId        String?  @map("template_id")
+  invoiceNo         String   @map("invoice_no")
+  date              DateTime @db.Date
+  status            String   @default("draft")
+  totalAmount       Decimal  @map("total_amount") @db.Decimal(10, 2)
+  taxAmount         Decimal  @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  notes             String?  @db.Text
+  eWayBillNo        String?  @map("e_way_bill_no")
+  deliveryNote      String?  @map("delivery_note")
+  modeTermsOfPayment String? @map("mode_terms_of_payment")
+  supplierRef       String?  @map("supplier_ref")
+  otherReferences   String?  @map("other_references")
+  buyerOrderNo      String?  @map("buyer_order_no")
+  buyerOrderDate    DateTime? @map("buyer_order_date") @db.Date
+  despatchDocumentNo String? @map("despatch_document_no")
+  deliveryNoteDate  DateTime? @map("delivery_note_date") @db.Date
+  despatchedThrough String?  @map("despatched_through")
+  destination       String?  @map("destination")
+  termsOfDelivery   String?  @map("terms_of_delivery")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
 
   company  Company  @relation(fields: [companyId], references: [id])
   client   Client   @relation(fields: [clientId], references: [id])
@@ -131,6 +147,7 @@ model InvoiceItem {
   itemId    String?  @map("item_id")
   name      String
   hsnCode   String?  @map("hsn_code")
+  batch     String?  @map("batch")
   quantity  Decimal  @db.Decimal(10, 3)
   rate      Decimal  @db.Decimal(10, 2)
   taxRate   Decimal  @map("tax_rate") @db.Decimal(5, 2)

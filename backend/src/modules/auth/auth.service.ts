@@ -1,10 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../shared/db/prisma.js';
 import { config } from '../../shared/config/config.js';
 import { createError } from '../../shared/middleware/error-handler.js';
-
-const prisma = new PrismaClient();
 
 export interface RegisterDto {
   email: string;

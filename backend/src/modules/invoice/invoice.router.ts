@@ -25,12 +25,25 @@ const createInvoiceSchema = z.object({
       itemId: z.string().uuid().optional(),
       name: z.string().min(1),
       hsnCode: z.string().optional(),
+      batch: z.string().optional(),
       quantity: z.number().positive(),
       rate: z.number().positive(),
       taxRate: z.number().min(0).max(100),
     })
   ).min(1),
   notes: z.string().optional(),
+  eWayBillNo: z.string().optional(),
+  deliveryNote: z.string().optional(),
+  modeTermsOfPayment: z.string().optional(),
+  supplierRef: z.string().optional(),
+  otherReferences: z.string().optional(),
+  buyerOrderNo: z.string().optional(),
+  buyerOrderDate: z.union([z.string().date(), z.literal('')]).optional().transform((val) => val === '' ? undefined : val),
+  despatchDocumentNo: z.string().optional(),
+  deliveryNoteDate: z.union([z.string().date(), z.literal('')]).optional().transform((val) => val === '' ? undefined : val),
+  despatchedThrough: z.string().optional(),
+  destination: z.string().optional(),
+  termsOfDelivery: z.string().optional(),
 });
 
 const updateInvoiceSchema = z.object({
@@ -43,12 +56,25 @@ const updateInvoiceSchema = z.object({
       itemId: z.string().uuid().optional(),
       name: z.string().min(1),
       hsnCode: z.string().optional(),
+      batch: z.string().optional(),
       quantity: z.number().positive(),
       rate: z.number().positive(),
       taxRate: z.number().min(0).max(100),
     })
   ).optional(),
   notes: z.string().optional(),
+  eWayBillNo: z.string().optional(),
+  deliveryNote: z.string().optional(),
+  modeTermsOfPayment: z.string().optional(),
+  supplierRef: z.string().optional(),
+  otherReferences: z.string().optional(),
+  buyerOrderNo: z.string().optional(),
+  buyerOrderDate: z.union([z.string().date(), z.literal('')]).optional().transform((val) => val === '' ? undefined : val),
+  despatchDocumentNo: z.string().optional(),
+  deliveryNoteDate: z.union([z.string().date(), z.literal('')]).optional().transform((val) => val === '' ? undefined : val),
+  despatchedThrough: z.string().optional(),
+  destination: z.string().optional(),
+  termsOfDelivery: z.string().optional(),
 });
 
 router.post('/', validate(createInvoiceSchema), asyncHandler(createInvoice));
