@@ -18,7 +18,10 @@ const debounce = <T extends (...args: unknown[]) => void>(
 
 const saveCompanies = debounce(async (companies: Company[]) => {
   try {
-    await dbService.companies.setAll(companies);
+    const result = await dbService.companies.setAll(companies);
+    if (!result.success) {
+      console.error("Failed to save companies");
+    }
   } catch (error) {
     console.error("Failed to save companies:", error);
   }
@@ -26,7 +29,10 @@ const saveCompanies = debounce(async (companies: Company[]) => {
 
 const saveClients = debounce(async (clients: Client[]) => {
   try {
-    await dbService.clients.setAll(clients);
+    const result = await dbService.clients.setAll(clients);
+    if (!result.success) {
+      console.error("Failed to save clients");
+    }
   } catch (error) {
     console.error("Failed to save clients:", error);
   }
@@ -34,7 +40,10 @@ const saveClients = debounce(async (clients: Client[]) => {
 
 const saveItems = debounce(async (items: Item[]) => {
   try {
-    await dbService.items.setAll(items);
+    const result = await dbService.items.setAll(items);
+    if (!result.success) {
+      console.error("Failed to save items");
+    }
   } catch (error) {
     console.error("Failed to save items:", error);
   }

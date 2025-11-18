@@ -1,15 +1,40 @@
-const getIpcRenderer = (): ElectronIpcRenderer | null => {
-  if (typeof window !== 'undefined' && window.require) {
-    try {
-      return window.require('electron').ipcRenderer;
-    } catch {
-      return null;
-    }
+declare global {
+  interface Window {
+    electronAPI?: {
+      db: {
+        getPath: () => Promise<string>;
+        companies: {
+          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          create: (company: unknown) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, company: unknown) => Promise<{ success: boolean; error?: string }>;
+          delete: (id: string) => Promise<{ success: boolean; error?: string }>;
+          setAll: (companies: unknown[]) => Promise<{ success: boolean; error?: string }>;
+        };
+        clients: {
+          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          create: (client: unknown) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, client: unknown) => Promise<{ success: boolean; error?: string }>;
+          delete: (id: string) => Promise<{ success: boolean; error?: string }>;
+          setAll: (clients: unknown[]) => Promise<{ success: boolean; error?: string }>;
+        };
+        items: {
+          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          create: (item: unknown) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, item: unknown) => Promise<{ success: boolean; error?: string }>;
+          delete: (id: string) => Promise<{ success: boolean; error?: string }>;
+          setAll: (items: unknown[]) => Promise<{ success: boolean; error?: string }>;
+        };
+      };
+    };
+  }
+}
+
+const getElectronAPI = () => {
+  if (typeof window !== "undefined" && window.electronAPI) {
+    return window.electronAPI;
   }
   return null;
 };
-
-const ipcRenderer = getIpcRenderer();
 
 interface DbService {
   getPath: () => Promise<string>;
@@ -37,27 +62,173 @@ interface DbService {
 }
 
 export const dbService: DbService = {
-  getPath: () => ipcRenderer?.invoke('db:getPath') as Promise<string> || Promise.resolve(''),
+  getPath: async () => {
+    const api = getElectronAPI();
+    if (!api) return "";
+    try {
+      return await api.db.getPath();
+    } catch (error) {
+      console.error("Error getting database path:", error);
+      return "";
+    }
+  },
   companies: {
-    getAll: () => ipcRenderer?.invoke('db:companies:getAll') || Promise.resolve([]),
-    create: (company: unknown) => ipcRenderer?.invoke('db:companies:create', company) || Promise.resolve({ success: false }),
-    update: (id: string, company: unknown) => ipcRenderer?.invoke('db:companies:update', id, company) || Promise.resolve({ success: false }),
-    delete: (id: string) => ipcRenderer?.invoke('db:companies:delete', id) || Promise.resolve({ success: false }),
-    setAll: (companies: unknown[]) => ipcRenderer?.invoke('db:companies:setAll', companies) || Promise.resolve({ success: false }),
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.companies.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting companies:", error);
+        return [];
+      }
+    },
+    create: async (company: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.companies.create(company);
+      } catch (error) {
+        console.error("Error creating company:", error);
+        return { success: false };
+      }
+    },
+    update: async (id: string, company: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.companies.update(id, company);
+      } catch (error) {
+        console.error("Error updating company:", error);
+        return { success: false };
+      }
+    },
+    delete: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.companies.delete(id);
+      } catch (error) {
+        console.error("Error deleting company:", error);
+        return { success: false };
+      }
+    },
+    setAll: async (companies: unknown[]) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.companies.setAll(companies);
+      } catch (error) {
+        console.error("Error setting companies:", error);
+        return { success: false };
+      }
+    },
   },
   clients: {
-    getAll: () => ipcRenderer?.invoke('db:clients:getAll') || Promise.resolve([]),
-    create: (client: unknown) => ipcRenderer?.invoke('db:clients:create', client) || Promise.resolve({ success: false }),
-    update: (id: string, client: unknown) => ipcRenderer?.invoke('db:clients:update', id, client) || Promise.resolve({ success: false }),
-    delete: (id: string) => ipcRenderer?.invoke('db:clients:delete', id) || Promise.resolve({ success: false }),
-    setAll: (clients: unknown[]) => ipcRenderer?.invoke('db:clients:setAll', clients) || Promise.resolve({ success: false }),
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.clients.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting clients:", error);
+        return [];
+      }
+    },
+    create: async (client: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.clients.create(client);
+      } catch (error) {
+        console.error("Error creating client:", error);
+        return { success: false };
+      }
+    },
+    update: async (id: string, client: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.clients.update(id, client);
+      } catch (error) {
+        console.error("Error updating client:", error);
+        return { success: false };
+      }
+    },
+    delete: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.clients.delete(id);
+      } catch (error) {
+        console.error("Error deleting client:", error);
+        return { success: false };
+      }
+    },
+    setAll: async (clients: unknown[]) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.clients.setAll(clients);
+      } catch (error) {
+        console.error("Error setting clients:", error);
+        return { success: false };
+      }
+    },
   },
   items: {
-    getAll: () => ipcRenderer?.invoke('db:items:getAll') || Promise.resolve([]),
-    create: (item: unknown) => ipcRenderer?.invoke('db:items:create', item) || Promise.resolve({ success: false }),
-    update: (id: string, item: unknown) => ipcRenderer?.invoke('db:items:update', id, item) || Promise.resolve({ success: false }),
-    delete: (id: string) => ipcRenderer?.invoke('db:items:delete', id) || Promise.resolve({ success: false }),
-    setAll: (items: unknown[]) => ipcRenderer?.invoke('db:items:setAll', items) || Promise.resolve({ success: false }),
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.items.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting items:", error);
+        return [];
+      }
+    },
+    create: async (item: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.items.create(item);
+      } catch (error) {
+        console.error("Error creating item:", error);
+        return { success: false };
+      }
+    },
+    update: async (id: string, item: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.items.update(id, item);
+      } catch (error) {
+        console.error("Error updating item:", error);
+        return { success: false };
+      }
+    },
+    delete: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.items.delete(id);
+      } catch (error) {
+        console.error("Error deleting item:", error);
+        return { success: false };
+      }
+    },
+    setAll: async (items: unknown[]) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.items.setAll(items);
+      } catch (error) {
+        console.error("Error setting items:", error);
+        return { success: false };
+      }
+    },
   },
 };
-

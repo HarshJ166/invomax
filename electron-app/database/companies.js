@@ -1,177 +1,136 @@
-const { getDatabase } = require("./db");
+const { getDatabase, schema } = require("./db");
+const { eq, desc } = require("drizzle-orm");
+const { companies: companiesTable } = schema;
+
+const mapToCompany = (row) => ({
+  id: row.id,
+  companyName: row.companyName,
+  proprietor: row.proprietor,
+  address: row.address,
+  email: row.email,
+  phoneNumber: row.phoneNumber,
+  state: row.state,
+  city: row.city,
+  gstNumber: row.gstNumber,
+  invoiceNumberInitial: row.invoiceNumberInitial,
+  logo: row.logo,
+  logoPreview: row.logo,
+  signature: row.signature,
+  signaturePreview: row.signature,
+  accountNumber: row.accountNumber,
+  bankName: row.bankName,
+  ifscCode: row.ifscCode,
+  branch: row.branch,
+  revenueTotal: row.revenueTotal || 0,
+  debt: row.debt || 0,
+  invoiceCount: row.invoiceCount || 0,
+});
 
 const getAllCompanies = () => {
   const db = getDatabase();
-  const rows = db.prepare("SELECT * FROM companies ORDER BY created_at DESC").all();
-  return rows.map(row => ({
-    id: row.id,
-    companyName: row.company_name,
-    proprietor: row.proprietor,
-    address: row.address,
-    email: row.email,
-    phoneNumber: row.phone_number,
-    state: row.state,
-    city: row.city,
-    gstNumber: row.gst_number,
-    invoiceNumberInitial: row.invoice_number_initial,
-    logo: row.logo,
-    logoPreview: row.logo,
-    signature: row.signature,
-    signaturePreview: row.signature,
-    accountNumber: row.account_number,
-    bankName: row.bank_name,
-    ifscCode: row.ifsc_code,
-    branch: row.branch,
-    revenueTotal: row.revenue_total,
-    debt: row.debt,
-    invoiceCount: row.invoice_count,
-  }));
+  const rows = db.select().from(companiesTable).orderBy(desc(companiesTable.createdAt)).all();
+  return rows.map(mapToCompany);
 };
 
 const getCompanyById = (id) => {
   const db = getDatabase();
-  const row = db.prepare("SELECT * FROM companies WHERE id = ?").get(id);
-  if (!row) return null;
-  
-  return {
-    id: row.id,
-    companyName: row.company_name,
-    proprietor: row.proprietor,
-    address: row.address,
-    email: row.email,
-    phoneNumber: row.phone_number,
-    state: row.state,
-    city: row.city,
-    gstNumber: row.gst_number,
-    invoiceNumberInitial: row.invoice_number_initial,
-    logo: row.logo,
-    logoPreview: row.logo,
-    signature: row.signature,
-    signaturePreview: row.signature,
-    accountNumber: row.account_number,
-    bankName: row.bank_name,
-    ifscCode: row.ifsc_code,
-    branch: row.branch,
-    revenueTotal: row.revenue_total,
-    debt: row.debt,
-    invoiceCount: row.invoice_count,
-  };
+  const row = db.select().from(companiesTable).where(eq(companiesTable.id, id)).get();
+  return row ? mapToCompany(row) : null;
 };
 
 const createCompany = (company) => {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO companies (
-      id, company_name, proprietor, address, email, phone_number,
-      state, city, gst_number, invoice_number_initial,
-      logo, signature, account_number, bank_name, ifsc_code, branch,
-      revenue_total, debt, invoice_count
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  
-  stmt.run(
-    company.id,
-    company.companyName,
-    company.proprietor,
-    company.address,
-    company.email,
-    company.phoneNumber,
-    company.state,
-    company.city,
-    company.gstNumber,
-    company.invoiceNumberInitial,
-    company.logoPreview || null,
-    company.signaturePreview || null,
-    company.accountNumber,
-    company.bankName,
-    company.ifscCode,
-    company.branch,
-    company.revenueTotal || 0,
-    company.debt || 0,
-    company.invoiceCount || 0
-  );
+  db.insert(companiesTable).values({
+    id: company.id,
+    companyName: company.companyName,
+    proprietor: company.proprietor,
+    address: company.address,
+    email: company.email,
+    phoneNumber: company.phoneNumber,
+    state: company.state,
+    city: company.city,
+    gstNumber: company.gstNumber,
+    invoiceNumberInitial: company.invoiceNumberInitial,
+    logo: company.logoPreview || null,
+    signature: company.signaturePreview || null,
+    accountNumber: company.accountNumber,
+    bankName: company.bankName,
+    ifscCode: company.ifscCode,
+    branch: company.branch,
+    revenueTotal: company.revenueTotal || 0,
+    debt: company.debt || 0,
+    invoiceCount: company.invoiceCount || 0,
+  }).run();
 };
 
 const updateCompany = (id, company) => {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    UPDATE companies SET
-      company_name = ?, proprietor = ?, address = ?, email = ?,
-      phone_number = ?, state = ?, city = ?, gst_number = ?,
-      invoice_number_initial = ?, logo = ?, signature = ?,
-      account_number = ?, bank_name = ?, ifsc_code = ?, branch = ?,
-      revenue_total = ?, debt = ?, invoice_count = ?,
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-  
-  stmt.run(
-    company.companyName,
-    company.proprietor,
-    company.address,
-    company.email,
-    company.phoneNumber,
-    company.state,
-    company.city,
-    company.gstNumber,
-    company.invoiceNumberInitial,
-    company.logoPreview || null,
-    company.signaturePreview || null,
-    company.accountNumber,
-    company.bankName,
-    company.ifscCode,
-    company.branch,
-    company.revenueTotal || 0,
-    company.debt || 0,
-    company.invoiceCount || 0,
-    id
-  );
+  db.update(companiesTable)
+    .set({
+      companyName: company.companyName,
+      proprietor: company.proprietor,
+      address: company.address,
+      email: company.email,
+      phoneNumber: company.phoneNumber,
+      state: company.state,
+      city: company.city,
+      gstNumber: company.gstNumber,
+      invoiceNumberInitial: company.invoiceNumberInitial,
+      logo: company.logoPreview || null,
+      signature: company.signaturePreview || null,
+      accountNumber: company.accountNumber,
+      bankName: company.bankName,
+      ifscCode: company.ifscCode,
+      branch: company.branch,
+      revenueTotal: company.revenueTotal || 0,
+      debt: company.debt || 0,
+      invoiceCount: company.invoiceCount || 0,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(companiesTable.id, id))
+    .run();
 };
 
 const deleteCompany = (id) => {
   const db = getDatabase();
-  db.prepare("DELETE FROM companies WHERE id = ?").run(id);
+  db.delete(companiesTable).where(eq(companiesTable.id, id)).run();
 };
 
-const setAllCompanies = (companies) => {
+const setAllCompanies = (companiesList) => {
   const db = getDatabase();
-  const transaction = db.transaction((companies) => {
-    db.prepare("DELETE FROM companies").run();
-    const stmt = db.prepare(`
-      INSERT INTO companies (
-        id, company_name, proprietor, address, email, phone_number,
-        state, city, gst_number, invoice_number_initial,
-        logo, signature, account_number, bank_name, ifsc_code, branch,
-        revenue_total, debt, invoice_count
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+  const sqliteDb = require("./db").getSqliteDatabase();
+  
+  const transaction = sqliteDb.transaction(() => {
+    db.delete(companiesTable).run();
     
-    for (const company of companies) {
-      stmt.run(
-        company.id,
-        company.companyName,
-        company.proprietor,
-        company.address,
-        company.email,
-        company.phoneNumber,
-        company.state,
-        company.city,
-        company.gstNumber,
-        company.invoiceNumberInitial,
-        company.logoPreview || null,
-        company.signaturePreview || null,
-        company.accountNumber,
-        company.bankName,
-        company.ifscCode,
-        company.branch,
-        company.revenueTotal || 0,
-        company.debt || 0,
-        company.invoiceCount || 0
-      );
+    if (companiesList.length > 0) {
+      const values = companiesList.map(company => ({
+        id: company.id,
+        companyName: company.companyName,
+        proprietor: company.proprietor,
+        address: company.address,
+        email: company.email,
+        phoneNumber: company.phoneNumber,
+        state: company.state,
+        city: company.city,
+        gstNumber: company.gstNumber,
+        invoiceNumberInitial: company.invoiceNumberInitial,
+        logo: company.logoPreview || null,
+        signature: company.signaturePreview || null,
+        accountNumber: company.accountNumber,
+        bankName: company.bankName,
+        ifscCode: company.ifscCode,
+        branch: company.branch,
+        revenueTotal: company.revenueTotal || 0,
+        debt: company.debt || 0,
+        invoiceCount: company.invoiceCount || 0,
+      }));
+      
+      db.insert(companiesTable).values(values).run();
     }
   });
   
-  transaction(companies);
+  transaction();
 };
 
 module.exports = {
@@ -182,4 +141,3 @@ module.exports = {
   deleteCompany,
   setAllCompanies,
 };
-

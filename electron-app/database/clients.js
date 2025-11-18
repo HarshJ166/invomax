@@ -1,229 +1,170 @@
-const { getDatabase } = require("./db");
+const { getDatabase, schema } = require("./db");
+const { eq, desc } = require("drizzle-orm");
+const { clients: clientsTable } = schema;
+
+const mapToClient = (row) => ({
+  id: row.id,
+  customerType: row.customerType,
+  salutation: row.salutation,
+  firstName: row.firstName,
+  lastName: row.lastName,
+  panNumber: row.panNumber,
+  companyName: row.companyName,
+  currency: row.currency,
+  gstApplicable: Boolean(row.gstApplicable),
+  gstin: row.gstin,
+  stateCode: row.stateCode,
+  billingCountry: row.billingCountry,
+  billingState: row.billingState,
+  billingCity: row.billingCity,
+  billingAddressLine1: row.billingAddressLine1,
+  billingAddressLine2: row.billingAddressLine2,
+  billingContactNo: row.billingContactNo,
+  billingEmail: row.billingEmail,
+  billingAlternateContactNo: row.billingAlternateContactNo,
+  shippingCountry: row.shippingCountry,
+  shippingState: row.shippingState,
+  shippingCity: row.shippingCity,
+  shippingAddressLine1: row.shippingAddressLine1,
+  shippingAddressLine2: row.shippingAddressLine2,
+  shippingContactNo: row.shippingContactNo,
+  shippingEmail: row.shippingEmail,
+  shippingAlternateContactNo: row.shippingAlternateContactNo,
+  balance: row.balance || 0,
+});
 
 const getAllClients = () => {
   const db = getDatabase();
-  const rows = db.prepare("SELECT * FROM clients ORDER BY created_at DESC").all();
-  return rows.map(row => ({
-    id: row.id,
-    customerType: row.customer_type,
-    salutation: row.salutation,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    panNumber: row.pan_number,
-    companyName: row.company_name,
-    currency: row.currency,
-    gstApplicable: Boolean(row.gst_applicable),
-    gstin: row.gstin,
-    stateCode: row.state_code,
-    billingCountry: row.billing_country,
-    billingState: row.billing_state,
-    billingCity: row.billing_city,
-    billingAddressLine1: row.billing_address_line1,
-    billingAddressLine2: row.billing_address_line2,
-    billingContactNo: row.billing_contact_no,
-    billingEmail: row.billing_email,
-    billingAlternateContactNo: row.billing_alternate_contact_no,
-    shippingCountry: row.shipping_country,
-    shippingState: row.shipping_state,
-    shippingCity: row.shipping_city,
-    shippingAddressLine1: row.shipping_address_line1,
-    shippingAddressLine2: row.shipping_address_line2,
-    shippingContactNo: row.shipping_contact_no,
-    shippingEmail: row.shipping_email,
-    shippingAlternateContactNo: row.shipping_alternate_contact_no,
-    balance: row.balance,
-  }));
+  const rows = db.select().from(clientsTable).orderBy(desc(clientsTable.createdAt)).all();
+  return rows.map(mapToClient);
 };
 
 const getClientById = (id) => {
   const db = getDatabase();
-  const row = db.prepare("SELECT * FROM clients WHERE id = ?").get(id);
-  if (!row) return null;
-  
-  return {
-    id: row.id,
-    customerType: row.customer_type,
-    salutation: row.salutation,
-    firstName: row.first_name,
-    lastName: row.last_name,
-    panNumber: row.pan_number,
-    companyName: row.company_name,
-    currency: row.currency,
-    gstApplicable: Boolean(row.gst_applicable),
-    gstin: row.gstin,
-    stateCode: row.state_code,
-    billingCountry: row.billing_country,
-    billingState: row.billing_state,
-    billingCity: row.billing_city,
-    billingAddressLine1: row.billing_address_line1,
-    billingAddressLine2: row.billing_address_line2,
-    billingContactNo: row.billing_contact_no,
-    billingEmail: row.billing_email,
-    billingAlternateContactNo: row.billing_alternate_contact_no,
-    shippingCountry: row.shipping_country,
-    shippingState: row.shipping_state,
-    shippingCity: row.shipping_city,
-    shippingAddressLine1: row.shipping_address_line1,
-    shippingAddressLine2: row.shipping_address_line2,
-    shippingContactNo: row.shipping_contact_no,
-    shippingEmail: row.shipping_email,
-    shippingAlternateContactNo: row.shipping_alternate_contact_no,
-    balance: row.balance,
-  };
+  const row = db.select().from(clientsTable).where(eq(clientsTable.id, id)).get();
+  return row ? mapToClient(row) : null;
 };
 
 const createClient = (client) => {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO clients (
-      id, customer_type, salutation, first_name, last_name, pan_number,
-      company_name, currency, gst_applicable, gstin, state_code,
-      billing_country, billing_state, billing_city, billing_address_line1,
-      billing_address_line2, billing_contact_no, billing_email,
-      billing_alternate_contact_no, shipping_country, shipping_state,
-      shipping_city, shipping_address_line1, shipping_address_line2,
-      shipping_contact_no, shipping_email, shipping_alternate_contact_no,
-      balance
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  
-  stmt.run(
-    client.id,
-    client.customerType,
-    client.salutation || null,
-    client.firstName,
-    client.lastName,
-    client.panNumber || null,
-    client.companyName || null,
-    client.currency || "inr",
-    client.gstApplicable ? 1 : 0,
-    client.gstin || null,
-    client.stateCode || null,
-    client.billingCountry || null,
-    client.billingState || null,
-    client.billingCity || null,
-    client.billingAddressLine1 || null,
-    client.billingAddressLine2 || null,
-    client.billingContactNo || null,
-    client.billingEmail || null,
-    client.billingAlternateContactNo || null,
-    client.shippingCountry || null,
-    client.shippingState || null,
-    client.shippingCity || null,
-    client.shippingAddressLine1 || null,
-    client.shippingAddressLine2 || null,
-    client.shippingContactNo || null,
-    client.shippingEmail || null,
-    client.shippingAlternateContactNo || null,
-    client.balance || 0
-  );
+  db.insert(clientsTable).values({
+    id: client.id,
+    customerType: client.customerType,
+    salutation: client.salutation || null,
+    firstName: client.firstName,
+    lastName: client.lastName,
+    panNumber: client.panNumber || null,
+    companyName: client.companyName || null,
+    currency: client.currency || "inr",
+    gstApplicable: client.gstApplicable || false,
+    gstin: client.gstin || null,
+    stateCode: client.stateCode || null,
+    billingCountry: client.billingCountry || null,
+    billingState: client.billingState || null,
+    billingCity: client.billingCity || null,
+    billingAddressLine1: client.billingAddressLine1 || null,
+    billingAddressLine2: client.billingAddressLine2 || null,
+    billingContactNo: client.billingContactNo || null,
+    billingEmail: client.billingEmail || null,
+    billingAlternateContactNo: client.billingAlternateContactNo || null,
+    shippingCountry: client.shippingCountry || null,
+    shippingState: client.shippingState || null,
+    shippingCity: client.shippingCity || null,
+    shippingAddressLine1: client.shippingAddressLine1 || null,
+    shippingAddressLine2: client.shippingAddressLine2 || null,
+    shippingContactNo: client.shippingContactNo || null,
+    shippingEmail: client.shippingEmail || null,
+    shippingAlternateContactNo: client.shippingAlternateContactNo || null,
+    balance: client.balance || 0,
+  }).run();
 };
 
 const updateClient = (id, client) => {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    UPDATE clients SET
-      customer_type = ?, salutation = ?, first_name = ?, last_name = ?,
-      pan_number = ?, company_name = ?, currency = ?, gst_applicable = ?,
-      gstin = ?, state_code = ?, billing_country = ?, billing_state = ?,
-      billing_city = ?, billing_address_line1 = ?, billing_address_line2 = ?,
-      billing_contact_no = ?, billing_email = ?, billing_alternate_contact_no = ?,
-      shipping_country = ?, shipping_state = ?, shipping_city = ?,
-      shipping_address_line1 = ?, shipping_address_line2 = ?,
-      shipping_contact_no = ?, shipping_email = ?, shipping_alternate_contact_no = ?,
-      balance = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-  
-  stmt.run(
-    client.customerType,
-    client.salutation || null,
-    client.firstName,
-    client.lastName,
-    client.panNumber || null,
-    client.companyName || null,
-    client.currency || "inr",
-    client.gstApplicable ? 1 : 0,
-    client.gstin || null,
-    client.stateCode || null,
-    client.billingCountry || null,
-    client.billingState || null,
-    client.billingCity || null,
-    client.billingAddressLine1 || null,
-    client.billingAddressLine2 || null,
-    client.billingContactNo || null,
-    client.billingEmail || null,
-    client.billingAlternateContactNo || null,
-    client.shippingCountry || null,
-    client.shippingState || null,
-    client.shippingCity || null,
-    client.shippingAddressLine1 || null,
-    client.shippingAddressLine2 || null,
-    client.shippingContactNo || null,
-    client.shippingEmail || null,
-    client.shippingAlternateContactNo || null,
-    client.balance || 0,
-    id
-  );
+  db.update(clientsTable)
+    .set({
+      customerType: client.customerType,
+      salutation: client.salutation || null,
+      firstName: client.firstName,
+      lastName: client.lastName,
+      panNumber: client.panNumber || null,
+      companyName: client.companyName || null,
+      currency: client.currency || "inr",
+      gstApplicable: client.gstApplicable || false,
+      gstin: client.gstin || null,
+      stateCode: client.stateCode || null,
+      billingCountry: client.billingCountry || null,
+      billingState: client.billingState || null,
+      billingCity: client.billingCity || null,
+      billingAddressLine1: client.billingAddressLine1 || null,
+      billingAddressLine2: client.billingAddressLine2 || null,
+      billingContactNo: client.billingContactNo || null,
+      billingEmail: client.billingEmail || null,
+      billingAlternateContactNo: client.billingAlternateContactNo || null,
+      shippingCountry: client.shippingCountry || null,
+      shippingState: client.shippingState || null,
+      shippingCity: client.shippingCity || null,
+      shippingAddressLine1: client.shippingAddressLine1 || null,
+      shippingAddressLine2: client.shippingAddressLine2 || null,
+      shippingContactNo: client.shippingContactNo || null,
+      shippingEmail: client.shippingEmail || null,
+      shippingAlternateContactNo: client.shippingAlternateContactNo || null,
+      balance: client.balance || 0,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(clientsTable.id, id))
+    .run();
 };
 
 const deleteClient = (id) => {
   const db = getDatabase();
-  db.prepare("DELETE FROM clients WHERE id = ?").run(id);
+  db.delete(clientsTable).where(eq(clientsTable.id, id)).run();
 };
 
-const setAllClients = (clients) => {
+const setAllClients = (clientsList) => {
   const db = getDatabase();
-  const transaction = db.transaction((clients) => {
-    db.prepare("DELETE FROM clients").run();
-    const stmt = db.prepare(`
-      INSERT INTO clients (
-        id, customer_type, salutation, first_name, last_name, pan_number,
-        company_name, currency, gst_applicable, gstin, state_code,
-        billing_country, billing_state, billing_city, billing_address_line1,
-        billing_address_line2, billing_contact_no, billing_email,
-        billing_alternate_contact_no, shipping_country, shipping_state,
-        shipping_city, shipping_address_line1, shipping_address_line2,
-        shipping_contact_no, shipping_email, shipping_alternate_contact_no,
-        balance
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+  const sqliteDb = require("./db").getSqliteDatabase();
+  
+  const transaction = sqliteDb.transaction(() => {
+    db.delete(clientsTable).run();
     
-    for (const client of clients) {
-      stmt.run(
-        client.id,
-        client.customerType,
-        client.salutation || null,
-        client.firstName,
-        client.lastName,
-        client.panNumber || null,
-        client.companyName || null,
-        client.currency || "inr",
-        client.gstApplicable ? 1 : 0,
-        client.gstin || null,
-        client.stateCode || null,
-        client.billingCountry || null,
-        client.billingState || null,
-        client.billingCity || null,
-        client.billingAddressLine1 || null,
-        client.billingAddressLine2 || null,
-        client.billingContactNo || null,
-        client.billingEmail || null,
-        client.billingAlternateContactNo || null,
-        client.shippingCountry || null,
-        client.shippingState || null,
-        client.shippingCity || null,
-        client.shippingAddressLine1 || null,
-        client.shippingAddressLine2 || null,
-        client.shippingContactNo || null,
-        client.shippingEmail || null,
-        client.shippingAlternateContactNo || null,
-        client.balance || 0
-      );
+    if (clientsList.length > 0) {
+      const values = clientsList.map(client => ({
+        id: client.id,
+        customerType: client.customerType,
+        salutation: client.salutation || null,
+        firstName: client.firstName,
+        lastName: client.lastName,
+        panNumber: client.panNumber || null,
+        companyName: client.companyName || null,
+        currency: client.currency || "inr",
+        gstApplicable: client.gstApplicable || false,
+        gstin: client.gstin || null,
+        stateCode: client.stateCode || null,
+        billingCountry: client.billingCountry || null,
+        billingState: client.billingState || null,
+        billingCity: client.billingCity || null,
+        billingAddressLine1: client.billingAddressLine1 || null,
+        billingAddressLine2: client.billingAddressLine2 || null,
+        billingContactNo: client.billingContactNo || null,
+        billingEmail: client.billingEmail || null,
+        billingAlternateContactNo: client.billingAlternateContactNo || null,
+        shippingCountry: client.shippingCountry || null,
+        shippingState: client.shippingState || null,
+        shippingCity: client.shippingCity || null,
+        shippingAddressLine1: client.shippingAddressLine1 || null,
+        shippingAddressLine2: client.shippingAddressLine2 || null,
+        shippingContactNo: client.shippingContactNo || null,
+        shippingEmail: client.shippingEmail || null,
+        shippingAlternateContactNo: client.shippingAlternateContactNo || null,
+        balance: client.balance || 0,
+      }));
+      
+      db.insert(clientsTable).values(values).run();
     }
   });
   
-  transaction(clients);
+  transaction();
 };
 
 module.exports = {
@@ -234,4 +175,3 @@ module.exports = {
   deleteClient,
   setAllClients,
 };
-

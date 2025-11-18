@@ -1,7 +1,10 @@
 const Database = require("better-sqlite3");
+const { drizzle } = require("drizzle-orm/better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 const { app } = require("electron");
+const { companies, clients, items, invoices } = require("./schema");
+const { migrate } = require("drizzle-orm/better-sqlite3/migrator");
 
 const getDbPath = () => {
   if (process.env.DATABASE_URL) {
@@ -24,14 +27,17 @@ const getDbPath = () => {
   return dbPath;
 };
 
+let sqliteDb = null;
 let db = null;
 
 const initializeDatabase = () => {
   const dbPath = getDbPath();
-  db = new Database(dbPath);
+  sqliteDb = new Database(dbPath);
   
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
+  sqliteDb.pragma("journal_mode = WAL");
+  sqliteDb.pragma("foreign_keys = ON");
+  
+  db = drizzle(sqliteDb);
   
   createTables();
   
@@ -39,7 +45,7 @@ const initializeDatabase = () => {
 };
 
 const createTables = () => {
-  db.exec(`
+  sqliteDb.exec(`
     CREATE TABLE IF NOT EXISTS companies (
       id TEXT PRIMARY KEY,
       company_name TEXT NOT NULL,
@@ -144,14 +150,22 @@ const getDatabase = () => {
   return db;
 };
 
+const getSqliteDatabase = () => {
+  if (!sqliteDb) {
+    initializeDatabase();
+  }
+  return sqliteDb;
+};
+
 const closeDatabase = () => {
-  if (db) {
+  if (sqliteDb) {
     try {
-      db.pragma("wal_checkpoint(FULL)");
+      sqliteDb.pragma("wal_checkpoint(FULL)");
     } catch (error) {
       console.error("Error checkpointing WAL:", error);
     }
-    db.close();
+    sqliteDb.close();
+    sqliteDb = null;
     db = null;
   }
 };
@@ -159,7 +173,8 @@ const closeDatabase = () => {
 module.exports = {
   initializeDatabase,
   getDatabase,
+  getSqliteDatabase,
   closeDatabase,
   getDbPath,
+  schema: { companies, clients, items, invoices },
 };
-

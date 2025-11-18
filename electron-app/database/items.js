@@ -1,104 +1,86 @@
-const { getDatabase } = require("./db");
+const { getDatabase, schema } = require("./db");
+const { eq, desc } = require("drizzle-orm");
+const { items: itemsTable } = schema;
+
+const mapToItem = (row) => ({
+  id: row.id,
+  itemName: row.itemName,
+  itemDescription: row.itemDescription,
+  hsnCode: row.hsnCode,
+  qtyAvailable: row.qtyAvailable,
+  rate: row.rate,
+  unit: row.unit,
+});
 
 const getAllItems = () => {
   const db = getDatabase();
-  const rows = db.prepare("SELECT * FROM items ORDER BY created_at DESC").all();
-  return rows.map(row => ({
-    id: row.id,
-    itemName: row.item_name,
-    itemDescription: row.item_description,
-    hsnCode: row.hsn_code,
-    qtyAvailable: row.qty_available,
-    rate: row.rate,
-    unit: row.unit,
-  }));
+  const rows = db.select().from(itemsTable).orderBy(desc(itemsTable.createdAt)).all();
+  return rows.map(mapToItem);
 };
 
 const getItemById = (id) => {
   const db = getDatabase();
-  const row = db.prepare("SELECT * FROM items WHERE id = ?").get(id);
-  if (!row) return null;
-  
-  return {
-    id: row.id,
-    itemName: row.item_name,
-    itemDescription: row.item_description,
-    hsnCode: row.hsn_code,
-    qtyAvailable: row.qty_available,
-    rate: row.rate,
-    unit: row.unit,
-  };
+  const row = db.select().from(itemsTable).where(eq(itemsTable.id, id)).get();
+  return row ? mapToItem(row) : null;
 };
 
 const createItem = (item) => {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    INSERT INTO items (
-      id, item_name, item_description, hsn_code, qty_available, rate, unit
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-  
-  stmt.run(
-    item.id,
-    item.itemName,
-    item.itemDescription || null,
-    item.hsnCode,
-    item.qtyAvailable,
-    item.rate,
-    item.unit
-  );
+  db.insert(itemsTable).values({
+    id: item.id,
+    itemName: item.itemName,
+    itemDescription: item.itemDescription || null,
+    hsnCode: item.hsnCode,
+    qtyAvailable: item.qtyAvailable,
+    rate: item.rate,
+    unit: item.unit,
+  }).run();
 };
 
 const updateItem = (id, item) => {
   const db = getDatabase();
-  const stmt = db.prepare(`
-    UPDATE items SET
-      item_name = ?, item_description = ?, hsn_code = ?,
-      qty_available = ?, rate = ?, unit = ?,
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `);
-  
-  stmt.run(
-    item.itemName,
-    item.itemDescription || null,
-    item.hsnCode,
-    item.qtyAvailable,
-    item.rate,
-    item.unit,
-    id
-  );
+  db.update(itemsTable)
+    .set({
+      itemName: item.itemName,
+      itemDescription: item.itemDescription || null,
+      hsnCode: item.hsnCode,
+      qtyAvailable: item.qtyAvailable,
+      rate: item.rate,
+      unit: item.unit,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(itemsTable.id, id))
+    .run();
 };
 
 const deleteItem = (id) => {
   const db = getDatabase();
-  db.prepare("DELETE FROM items WHERE id = ?").run(id);
+  db.delete(itemsTable).where(eq(itemsTable.id, id)).run();
 };
 
-const setAllItems = (items) => {
+const setAllItems = (itemsList) => {
   const db = getDatabase();
-  const transaction = db.transaction((items) => {
-    db.prepare("DELETE FROM items").run();
-    const stmt = db.prepare(`
-      INSERT INTO items (
-        id, item_name, item_description, hsn_code, qty_available, rate, unit
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+  const sqliteDb = require("./db").getSqliteDatabase();
+  
+  const transaction = sqliteDb.transaction(() => {
+    db.delete(itemsTable).run();
     
-    for (const item of items) {
-      stmt.run(
-        item.id,
-        item.itemName,
-        item.itemDescription || null,
-        item.hsnCode,
-        item.qtyAvailable,
-        item.rate,
-        item.unit
-      );
+    if (itemsList.length > 0) {
+      const values = itemsList.map(item => ({
+        id: item.id,
+        itemName: item.itemName,
+        itemDescription: item.itemDescription || null,
+        hsnCode: item.hsnCode,
+        qtyAvailable: item.qtyAvailable,
+        rate: item.rate,
+        unit: item.unit,
+      }));
+      
+      db.insert(itemsTable).values(values).run();
     }
   });
   
-  transaction(items);
+  transaction();
 };
 
 module.exports = {
@@ -109,4 +91,3 @@ module.exports = {
   deleteItem,
   setAllItems,
 };
-
