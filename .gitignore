@@ -1,0 +1,20 @@
+//add the necessary files to the .gitignore file
+node_modules
+dist
+build
+out
+.next
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.development
+.env.test
+.env.production
+
+my-app/node_modules
+my-app/dist
+my-app/build
+
+electron-app/node_modules
