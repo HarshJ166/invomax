@@ -28,6 +28,16 @@ interface InvoiceNotes {
   [key: string]: unknown;
 }
 
+interface TaxDetail {
+  hsnCode: string;
+  taxableValue: number;
+  centralTaxRate: number;
+  centralTaxAmount: number;
+  stateTaxRate: number;
+  stateTaxAmount: number;
+  totalTaxAmount: number;
+}
+
 const styles: { [key: string]: React.CSSProperties } = {
   page: {
     fontFamily: "Helvetica, Arial, sans-serif",
@@ -200,10 +210,25 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderBottom: "1pt solid #000",
   },
   taxCol: {
-    flex: 1,
     borderRight: "1pt solid #000",
     padding: "2pt",
     textAlign: "right",
+  },
+  taxTableRow: {
+    display: "flex",
+    flexDirection: "row",
+    borderBottom: "1pt solid #000",
+    minHeight: "20pt",
+    alignItems: "center",
+  },
+  taxTableHeader: {
+    display: "flex",
+    flexDirection: "row",
+    borderBottom: "1pt solid #000",
+    backgroundColor: "#f0f0f0",
+    minHeight: "25pt",
+    alignItems: "center",
+    fontWeight: "bold",
   },
   declarationSection: {
     display: "flex",
@@ -257,6 +282,45 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
   } catch (e) {
     console.error("Failed to parse invoice notes:", e);
   }
+
+  const calculateTaxDetails = (): TaxDetail[] => {
+    const taxDetailsMap = new Map<string, TaxDetail>();
+
+    items.forEach((item) => {
+      if (item.hsnCode && item.amount > 0) {
+        const existing = taxDetailsMap.get(item.hsnCode) || {
+          hsnCode: item.hsnCode,
+          taxableValue: 0,
+          centralTaxRate: 0,
+          centralTaxAmount: 0,
+          stateTaxRate: 0,
+          stateTaxAmount: 0,
+          totalTaxAmount: 0,
+        };
+
+        existing.taxableValue += item.amount;
+        taxDetailsMap.set(item.hsnCode, existing);
+      }
+    });
+
+    if (notes.gstSlab && notes.gstSlab !== "") {
+      const gstRate = parseFloat(notes.gstSlab);
+      const cgstRate = gstRate / 2;
+      const sgstRate = gstRate / 2;
+
+      taxDetailsMap.forEach((detail) => {
+        detail.centralTaxRate = cgstRate;
+        detail.stateTaxRate = sgstRate;
+        detail.centralTaxAmount = (detail.taxableValue * cgstRate) / 100;
+        detail.stateTaxAmount = (detail.taxableValue * sgstRate) / 100;
+        detail.totalTaxAmount = detail.centralTaxAmount + detail.stateTaxAmount;
+      });
+    }
+
+    return Array.from(taxDetailsMap.values());
+  };
+
+  const taxDetails = calculateTaxDetails();
 
   const ITEMS_PER_PAGE_1 = 7;
   const ITEMS_PER_PAGE_REST = 15;
@@ -451,43 +515,150 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
                   </div>
                 </div>
 
+                {company.gstNumber &&
+                  notes.gstSlab &&
+                  notes.gstSlab !== "" &&
+                  taxDetails.length > 0 && (
+                    <>
+                      <div
+                        style={{ borderTop: "1pt solid #000", padding: "5pt" }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "9pt",
+                            fontWeight: "bold",
+                            marginBottom: "5pt",
+                          }}
+                        >
+                          Tax Details
+                        </div>
+                        <div
+                          style={{
+                            border: "1pt solid #000",
+                            borderBottom: "none",
+                          }}
+                        >
+                          <div style={styles.taxTableHeader}>
+                            <div
+                              style={{
+                                ...styles.taxCol,
+                                textAlign: "left",
+                                flex: "0 0 20%",
+                              }}
+                            >
+                              HSN/SAC
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 20%" }}>
+                              Taxable Value
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 15%" }}>
+                              Central Tax Rate
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 15%" }}>
+                              Central Tax Amount
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 15%" }}>
+                              State Tax Rate
+                            </div>
+                            <div
+                              style={{
+                                ...styles.taxCol,
+                                flex: "0 0 15%",
+                                borderRight: "none",
+                              }}
+                            >
+                              State Tax Amount
+                            </div>
+                          </div>
+                          {taxDetails.map((detail, idx) => (
+                            <div key={idx} style={styles.taxTableRow}>
+                              <div
+                                style={{
+                                  ...styles.taxCol,
+                                  textAlign: "left",
+                                  flex: "0 0 20%",
+                                }}
+                              >
+                                {detail.hsnCode}
+                              </div>
+                              <div
+                                style={{ ...styles.taxCol, flex: "0 0 20%" }}
+                              >
+                                {detail.taxableValue.toFixed(2)}
+                              </div>
+                              <div
+                                style={{ ...styles.taxCol, flex: "0 0 15%" }}
+                              >
+                                {detail.centralTaxRate}%
+                              </div>
+                              <div
+                                style={{ ...styles.taxCol, flex: "0 0 15%" }}
+                              >
+                                {detail.centralTaxAmount.toFixed(2)}
+                              </div>
+                              <div
+                                style={{ ...styles.taxCol, flex: "0 0 15%" }}
+                              >
+                                {detail.stateTaxRate}%
+                              </div>
+                              <div
+                                style={{
+                                  ...styles.taxCol,
+                                  flex: "0 0 15%",
+                                  borderRight: "none",
+                                }}
+                              >
+                                {detail.stateTaxAmount.toFixed(2)}
+                              </div>
+                            </div>
+                          ))}
+                          <div
+                            style={{
+                              ...styles.taxTableRow,
+                              fontWeight: "bold",
+                              borderBottom: "none",
+                            }}
+                          >
+                            <div
+                              style={{
+                                ...styles.taxCol,
+                                textAlign: "left",
+                                flex: "0 0 20%",
+                              }}
+                            >
+                              Total
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 20%" }}>
+                              {invoice.subtotal.toFixed(2)}
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 15%" }}>
+                              -
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 15%" }}>
+                              {(invoice.taxAmount / 2).toFixed(2)}
+                            </div>
+                            <div style={{ ...styles.taxCol, flex: "0 0 15%" }}>
+                              -
+                            </div>
+                            <div
+                              style={{
+                                ...styles.taxCol,
+                                flex: "0 0 15%",
+                                borderRight: "none",
+                              }}
+                            >
+                              {(invoice.taxAmount / 2).toFixed(2)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                 <div style={styles.amountInWords}>
                   Amount Chargeable (in words):{" "}
                   {numberToWords(invoice.totalAmount)}
                 </div>
-
-                {company.gstNumber && (
-                  <>
-                    <div style={styles.taxTable}>
-                      <div style={{ ...styles.taxCol, textAlign: "left" }}>
-                        HSN/SAC
-                      </div>
-                      <div style={styles.taxCol}>Taxable Value</div>
-                      <div style={styles.taxCol}>Central Tax</div>
-                      <div style={styles.taxCol}>State Tax</div>
-                      <div style={{ ...styles.taxCol, borderRight: "none" }}>
-                        Total Tax
-                      </div>
-                    </div>
-                    <div style={{ ...styles.taxTable, borderBottom: "none" }}>
-                      <div style={{ ...styles.taxCol, textAlign: "left" }}>
-                        Total
-                      </div>
-                      <div style={styles.taxCol}>
-                        {invoice.subtotal.toFixed(2)}
-                      </div>
-                      <div style={styles.taxCol}>
-                        {(invoice.taxAmount / 2).toFixed(2)}
-                      </div>
-                      <div style={styles.taxCol}>
-                        {(invoice.taxAmount / 2).toFixed(2)}
-                      </div>
-                      <div style={{ ...styles.taxCol, borderRight: "none" }}>
-                        {invoice.taxAmount.toFixed(2)}
-                      </div>
-                    </div>
-                  </>
-                )}
 
                 {company.gstNumber && invoice.taxAmount > 0 && (
                   <div style={{ borderTop: "1pt solid #000", padding: "5pt" }}>
@@ -513,9 +684,8 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
                       Declaration:
                     </div>
                     <div>
-                      We declare that this invoice shows the actual price of the
-                      goods described and that all particulars are true and
-                      correct.
+                      {notes.declaration ||
+                        "We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct."}
                     </div>
                   </div>
                   <div style={styles.signatureSection}>

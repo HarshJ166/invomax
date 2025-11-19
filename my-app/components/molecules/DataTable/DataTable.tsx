@@ -33,6 +33,14 @@ import {
   InfoIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import OverflowableText from "@/components/molecules/OverflowableText/OverflowableText";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export interface Column<T> {
   header: string;
@@ -54,6 +62,13 @@ interface DataTableProps<T> {
   emptyTitle?: string;
   emptyDescription?: string;
   className?: string;
+  pagination?: {
+    enabled: boolean;
+    pageSize?: number;
+    currentPage?: number;
+    total?: number;
+    onPageChange?: (page: number) => void;
+  };
 }
 
 export function DataTable<T extends Record<string, unknown>>({
@@ -69,8 +84,24 @@ export function DataTable<T extends Record<string, unknown>>({
   emptyTitle = "No data available",
   emptyDescription = "Get started by adding your first item.",
   className,
+  pagination,
 }: DataTableProps<T>) {
   const hasActions = Boolean(onEdit || onDelete || onInfo);
+  const isPaginationEnabled = pagination?.enabled ?? false;
+  const pageSize = pagination?.pageSize ?? 10;
+  const currentPage = pagination?.currentPage ?? 1;
+  const total = pagination?.total ?? data.length;
+  const totalPages = Math.ceil(total / pageSize);
+
+  const displayedData = isPaginationEnabled
+    ? data.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : data;
+
+  const handlePageChange = (newPage: number) => {
+    if (pagination?.onPageChange && newPage >= 1 && newPage <= totalPages) {
+      pagination.onPageChange(newPage);
+    }
+  };
 
   const getCellValue = (column: Column<T>, row: T): React.ReactNode => {
     if (typeof column.accessor === "function") {
@@ -136,7 +167,7 @@ export function DataTable<T extends Record<string, unknown>>({
           </Button>
         </div>
       )}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -145,7 +176,11 @@ export function DataTable<T extends Record<string, unknown>>({
               )}
               {columns.map((column, index) => (
                 <TableHead key={index} className={cn(column.className)}>
-                  {column.header}
+                  <OverflowableText
+                    content={column.header}
+                    maxLength={20}
+                    className="truncate block"
+                  />
                 </TableHead>
               ))}
               {hasActions && (
@@ -154,13 +189,17 @@ export function DataTable<T extends Record<string, unknown>>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row, rowIndex) => (
-              <TableRow key={getUniqueId(row, rowIndex)}>
-                {showSerialNumber && (
-                  <TableCell className="text-center text-muted-foreground">
-                    {rowIndex + 1}
-                  </TableCell>
-                )}
+            {displayedData.map((row, rowIndex) => {
+              const globalIndex = isPaginationEnabled
+                ? (currentPage - 1) * pageSize + rowIndex
+                : rowIndex;
+              return (
+                <TableRow key={getUniqueId(row, globalIndex)}>
+                  {showSerialNumber && (
+                    <TableCell className="text-center text-muted-foreground">
+                      {globalIndex + 1}
+                    </TableCell>
+                  )}
                 {columns.map((column, colIndex) => (
                   <TableCell key={colIndex} className={cn(column.className)}>
                     {renderCell(column, row)}
@@ -201,11 +240,48 @@ export function DataTable<T extends Record<string, unknown>>({
                     </DropdownMenu>
                   </TableCell>
                 )}
-              </TableRow>
-            ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
+      {isPaginationEnabled && totalPages > 1 && (
+        <div className="flex items-center justify-between px-2 py-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {Math.min((currentPage - 1) * pageSize + 1, total)} to{" "}
+            {Math.min(currentPage * pageSize, total)} of {total} entries
+          </div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage - 1);
+                  }}
+                  className={cn(
+                    currentPage === 1 && "pointer-events-none opacity-50"
+                  )}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handlePageChange(currentPage + 1);
+                  }}
+                  className={cn(
+                    currentPage >= totalPages && "pointer-events-none opacity-50"
+                  )}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }

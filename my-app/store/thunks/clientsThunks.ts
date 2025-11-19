@@ -37,6 +37,27 @@ export const fetchClients = createAsyncThunk(
   }
 );
 
+interface FetchClientsPaginatedPayload {
+  limit?: number;
+  offset?: number;
+}
+
+export const fetchClientsPaginated = createAsyncThunk(
+  "clients/fetchClientsPaginated",
+  async (payload: FetchClientsPaginatedPayload = { limit: 10, offset: 0 }, { dispatch, rejectWithValue }) => {
+    try {
+      const { limit = 10, offset = 0 } = payload;
+      const result = await dbService.clients.getPaginated(limit, offset);
+      const typedClients = result.data as Client[];
+      dispatch(setClients(typedClients));
+      return { data: typedClients, total: result.total };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch clients";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 export const createClientThunk = createAsyncThunk(
   "clients/createClient",
   async (payload: CreateClientPayload, { dispatch, rejectWithValue }) => {

@@ -16,10 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { Client } from "@/lib/types";
 import {
   fetchClients,
+  fetchClientsPaginated,
   createClientThunk,
   updateClientThunk,
   deleteClientThunk,
@@ -72,7 +73,7 @@ function ClientDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[90%] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Client Details</DialogTitle>
           <DialogDescription>
@@ -289,6 +290,23 @@ function ClientDetailsDialog({
 
 export default function ClientsPage() {
   const clients = useAppSelector((state) => state.clients.clients);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
+  const pageSize = 10;
+  const dispatch = useAppDispatch();
+
+  React.useEffect(() => {
+    const loadPage = async () => {
+      const offset = (currentPage - 1) * pageSize;
+      const result = await dispatch(
+        fetchClientsPaginated({ limit: pageSize, offset })
+      );
+      if (fetchClientsPaginated.fulfilled.match(result)) {
+        setTotal(result.payload.total);
+      }
+    };
+    loadPage();
+  }, [currentPage, dispatch]);
 
   const {
     dialogOpen,
@@ -296,7 +314,7 @@ export default function ClientsPage() {
     formData: clientData,
     setFormData: setClientData,
     selectedEntity: selectedClient,
-    handleRefresh,
+    handleRefresh: originalHandleRefresh,
     handleCreate,
     handleEdit,
     handleDelete,
@@ -325,6 +343,11 @@ export default function ClientsPage() {
     createPayloadKey: "client",
     getEntityName: (client) => `${client.firstName} ${client.lastName}`,
   });
+
+  const handleRefresh = () => {
+    setCurrentPage(1);
+    originalHandleRefresh();
+  };
 
   const columns: Column<Client>[] = [
     {
@@ -394,6 +417,13 @@ export default function ClientsPage() {
         createButtonLabel="Add Client"
         emptyTitle="No clients found"
         emptyDescription="Get started by adding your first client."
+        pagination={{
+          enabled: true,
+          pageSize,
+          currentPage,
+          total,
+          onPageChange: setCurrentPage,
+        }}
       />
       <ClientsDialog
         open={dialogOpen}

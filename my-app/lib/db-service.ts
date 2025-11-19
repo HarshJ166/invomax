@@ -5,6 +5,8 @@ declare global {
         getPath: () => Promise<string>;
         companies: {
           getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: unknown[]; total?: number; error?: string }>;
+          getCount: () => Promise<{ success: boolean; count?: number; error?: string }>;
           create: (company: unknown) => Promise<{ success: boolean; error?: string }>;
           update: (id: string, company: unknown) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
@@ -12,6 +14,8 @@ declare global {
         };
         clients: {
           getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: unknown[]; total?: number; error?: string }>;
+          getCount: () => Promise<{ success: boolean; count?: number; error?: string }>;
           create: (client: unknown) => Promise<{ success: boolean; error?: string }>;
           update: (id: string, client: unknown) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
@@ -19,6 +23,8 @@ declare global {
         };
         items: {
           getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: unknown[]; total?: number; error?: string }>;
+          getCount: () => Promise<{ success: boolean; count?: number; error?: string }>;
           create: (item: unknown) => Promise<{ success: boolean; error?: string }>;
           update: (id: string, item: unknown) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
@@ -53,6 +59,8 @@ interface DbService {
   getPath: () => Promise<string>;
   companies: {
     getAll: () => Promise<unknown[]>;
+    getPaginated: (limit: number, offset: number) => Promise<{ data: unknown[]; total: number }>;
+    getCount: () => Promise<number>;
     create: (company: unknown) => Promise<{ success: boolean }>;
     update: (id: string, company: unknown) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
@@ -60,6 +68,8 @@ interface DbService {
   };
   clients: {
     getAll: () => Promise<unknown[]>;
+    getPaginated: (limit: number, offset: number) => Promise<{ data: unknown[]; total: number }>;
+    getCount: () => Promise<number>;
     create: (client: unknown) => Promise<{ success: boolean }>;
     update: (id: string, client: unknown) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
@@ -67,6 +77,8 @@ interface DbService {
   };
   items: {
     getAll: () => Promise<unknown[]>;
+    getPaginated: (limit: number, offset: number) => Promise<{ data: unknown[]; total: number }>;
+    getCount: () => Promise<number>;
     create: (item: unknown) => Promise<{ success: boolean }>;
     update: (id: string, item: unknown) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
@@ -108,6 +120,31 @@ export const dbService: DbService = {
       } catch (error) {
         console.error("Error getting companies:", error);
         return [];
+      }
+    },
+    getPaginated: async (limit: number, offset: number) => {
+      const api = getElectronAPI();
+      if (!api) return { data: [], total: 0 };
+      try {
+        const result = await api.db.companies.getPaginated(limit, offset);
+        if (result.success && result.data) {
+          return { data: result.data, total: result.total || 0 };
+        }
+        return { data: [], total: 0 };
+      } catch (error) {
+        console.error("Error getting paginated companies:", error);
+        return { data: [], total: 0 };
+      }
+    },
+    getCount: async () => {
+      const api = getElectronAPI();
+      if (!api) return 0;
+      try {
+        const result = await api.db.companies.getCount();
+        return result.success && result.count !== undefined ? result.count : 0;
+      } catch (error) {
+        console.error("Error getting companies count:", error);
+        return 0;
       }
     },
     create: async (company: unknown) => {
@@ -163,6 +200,31 @@ export const dbService: DbService = {
         return [];
       }
     },
+    getPaginated: async (limit: number, offset: number) => {
+      const api = getElectronAPI();
+      if (!api) return { data: [], total: 0 };
+      try {
+        const result = await api.db.clients.getPaginated(limit, offset);
+        if (result.success && result.data) {
+          return { data: result.data, total: result.total || 0 };
+        }
+        return { data: [], total: 0 };
+      } catch (error) {
+        console.error("Error getting paginated clients:", error);
+        return { data: [], total: 0 };
+      }
+    },
+    getCount: async () => {
+      const api = getElectronAPI();
+      if (!api) return 0;
+      try {
+        const result = await api.db.clients.getCount();
+        return result.success && result.count !== undefined ? result.count : 0;
+      } catch (error) {
+        console.error("Error getting clients count:", error);
+        return 0;
+      }
+    },
     create: async (client: unknown) => {
       const api = getElectronAPI();
       if (!api) return { success: false };
@@ -214,6 +276,31 @@ export const dbService: DbService = {
       } catch (error) {
         console.error("Error getting items:", error);
         return [];
+      }
+    },
+    getPaginated: async (limit: number, offset: number) => {
+      const api = getElectronAPI();
+      if (!api) return { data: [], total: 0 };
+      try {
+        const result = await api.db.items.getPaginated(limit, offset);
+        if (result.success && result.data) {
+          return { data: result.data, total: result.total || 0 };
+        }
+        return { data: [], total: 0 };
+      } catch (error) {
+        console.error("Error getting paginated items:", error);
+        return { data: [], total: 0 };
+      }
+    },
+    getCount: async () => {
+      const api = getElectronAPI();
+      if (!api) return 0;
+      try {
+        const result = await api.db.items.getCount();
+        return result.success && result.count !== undefined ? result.count : 0;
+      } catch (error) {
+        console.error("Error getting items count:", error);
+        return 0;
       }
     },
     create: async (item: unknown) => {

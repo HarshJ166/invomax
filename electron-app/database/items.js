@@ -18,6 +18,24 @@ const getAllItems = () => {
   return rows.map(mapToItem);
 };
 
+const getItemsPaginated = (limit = 10, offset = 0) => {
+  const db = getDatabase();
+  const rows = db.select()
+    .from(itemsTable)
+    .orderBy(desc(itemsTable.createdAt))
+    .limit(limit)
+    .offset(offset)
+    .all();
+  return rows.map(mapToItem);
+};
+
+const getItemsCount = () => {
+  const db = getDatabase();
+  const sqliteDb = require("./db").getSqliteDatabase();
+  const result = sqliteDb.prepare("SELECT COUNT(*) as count FROM items").get();
+  return result?.count || 0;
+};
+
 const getItemById = (id) => {
   const db = getDatabase();
   const row = db.select().from(itemsTable).where(eq(itemsTable.id, id)).get();
@@ -85,6 +103,8 @@ const setAllItems = (itemsList) => {
 
 module.exports = {
   getAllItems,
+  getItemsPaginated,
+  getItemsCount,
   getItemById,
   createItem,
   updateItem,

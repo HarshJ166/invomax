@@ -32,6 +32,27 @@ export const fetchItems = createAsyncThunk(
   }
 );
 
+interface FetchItemsPaginatedPayload {
+  limit?: number;
+  offset?: number;
+}
+
+export const fetchItemsPaginated = createAsyncThunk(
+  "items/fetchItemsPaginated",
+  async (payload: FetchItemsPaginatedPayload = { limit: 10, offset: 0 }, { dispatch, rejectWithValue }) => {
+    try {
+      const { limit = 10, offset = 0 } = payload;
+      const result = await dbService.items.getPaginated(limit, offset);
+      const typedItems = result.data as Item[];
+      dispatch(setItems(typedItems));
+      return { data: typedItems, total: result.total };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch items";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 export const createItemThunk = createAsyncThunk(
   "items/createItem",
   async (payload: CreateItemPayload, { dispatch, rejectWithValue }) => {

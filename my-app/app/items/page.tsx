@@ -7,10 +7,11 @@ import {
   ItemFormData,
 } from "@/components/molecules/ItemDialog/ItemDialog";
 import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { Item } from "@/lib/types";
 import {
   fetchItems,
+  fetchItemsPaginated,
   createItemThunk,
   updateItemThunk,
   deleteItemThunk,
@@ -28,12 +29,29 @@ const initialItemData: ItemFormData = {
 
 export default function ItemsPage() {
   const items = useAppSelector((state) => state.items.items);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
+  const pageSize = 10;
+  const dispatch = useAppDispatch();
+
+  React.useEffect(() => {
+    const loadPage = async () => {
+      const offset = (currentPage - 1) * pageSize;
+      const result = await dispatch(
+        fetchItemsPaginated({ limit: pageSize, offset })
+      );
+      if (fetchItemsPaginated.fulfilled.match(result)) {
+        setTotal(result.payload.total);
+      }
+    };
+    loadPage();
+  }, [currentPage, dispatch]);
   
   const {
     dialogOpen,
     formData: itemData,
     setFormData: setItemData,
-    handleRefresh,
+    handleRefresh: originalHandleRefresh,
     handleCreate,
     handleEdit,
     handleDelete,
@@ -52,6 +70,11 @@ export default function ItemsPage() {
     createPayloadKey: "item",
     getEntityName: (item) => item.itemName,
   });
+
+  const handleRefresh = () => {
+    setCurrentPage(1);
+    originalHandleRefresh();
+  };
 
   const columns: Column<Item>[] = [
     {
@@ -117,6 +140,13 @@ export default function ItemsPage() {
         createButtonLabel="Add Item"
         emptyTitle="No items found"
         emptyDescription="Get started by adding your first item."
+        pagination={{
+          enabled: true,
+          pageSize,
+          currentPage,
+          total,
+          onPageChange: setCurrentPage,
+        }}
       />
       <ItemDialog
         open={dialogOpen}

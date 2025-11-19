@@ -19,6 +19,27 @@ const setupIpcHandlers = (ipcMain) => {
     }
   });
 
+  ipcMain.handle("db:companies:getPaginated", (_, limit, offset) => {
+    try {
+      const data = companiesDb.getCompaniesPaginated(limit, offset);
+      const total = companiesDb.getCompaniesCount();
+      return { success: true, data, total };
+    } catch (error) {
+      console.error("Error getting paginated companies:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:companies:getCount", () => {
+    try {
+      const count = companiesDb.getCompaniesCount();
+      return { success: true, count };
+    } catch (error) {
+      console.error("Error getting companies count:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("db:companies:create", (_, company) => {
     try {
       companiesDb.createCompany(company);
@@ -68,6 +89,27 @@ const setupIpcHandlers = (ipcMain) => {
     }
   });
 
+  ipcMain.handle("db:clients:getPaginated", (_, limit, offset) => {
+    try {
+      const data = clientsDb.getClientsPaginated(limit, offset);
+      const total = clientsDb.getClientsCount();
+      return { success: true, data, total };
+    } catch (error) {
+      console.error("Error getting paginated clients:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:clients:getCount", () => {
+    try {
+      const count = clientsDb.getClientsCount();
+      return { success: true, count };
+    } catch (error) {
+      console.error("Error getting clients count:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("db:clients:create", (_, client) => {
     try {
       clientsDb.createClient(client);
@@ -113,6 +155,27 @@ const setupIpcHandlers = (ipcMain) => {
       return { success: true, data: itemsDb.getAllItems() };
     } catch (error) {
       console.error("Error getting items:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:items:getPaginated", (_, limit, offset) => {
+    try {
+      const data = itemsDb.getItemsPaginated(limit, offset);
+      const total = itemsDb.getItemsCount();
+      return { success: true, data, total };
+    } catch (error) {
+      console.error("Error getting paginated items:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:items:getCount", () => {
+    try {
+      const count = itemsDb.getItemsCount();
+      return { success: true, count };
+    } catch (error) {
+      console.error("Error getting items count:", error);
       return { success: false, error: error.message };
     }
   });

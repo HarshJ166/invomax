@@ -116,7 +116,7 @@ export function ClientsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[95%] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -299,7 +299,7 @@ export function ClientsDialog({
 
             <div className="border-t pt-4">
               <Tabs defaultValue="billing">
-                <TabsList className="grid w-[300px] grid-cols-2">
+                <TabsList className="grid w-full max-w-[50%] grid-cols-2">
                   <TabsTrigger value="billing">Billing Address</TabsTrigger>
                   <TabsTrigger value="shipping">Shipping Address</TabsTrigger>
                 </TabsList>

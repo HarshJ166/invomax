@@ -32,6 +32,24 @@ const getAllCompanies = () => {
   return rows.map(mapToCompany);
 };
 
+const getCompaniesPaginated = (limit = 10, offset = 0) => {
+  const db = getDatabase();
+  const rows = db.select()
+    .from(companiesTable)
+    .orderBy(desc(companiesTable.createdAt))
+    .limit(limit)
+    .offset(offset)
+    .all();
+  return rows.map(mapToCompany);
+};
+
+const getCompaniesCount = () => {
+  const db = getDatabase();
+  const sqliteDb = require("./db").getSqliteDatabase();
+  const result = sqliteDb.prepare("SELECT COUNT(*) as count FROM companies").get();
+  return result?.count || 0;
+};
+
 const getCompanyById = (id) => {
   const db = getDatabase();
   const row = db.select().from(companiesTable).where(eq(companiesTable.id, id)).get();
@@ -135,6 +153,8 @@ const setAllCompanies = (companiesList) => {
 
 module.exports = {
   getAllCompanies,
+  getCompaniesPaginated,
+  getCompaniesCount,
   getCompanyById,
   createCompany,
   updateCompany,

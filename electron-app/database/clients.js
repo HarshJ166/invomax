@@ -39,6 +39,24 @@ const getAllClients = () => {
   return rows.map(mapToClient);
 };
 
+const getClientsPaginated = (limit = 10, offset = 0) => {
+  const db = getDatabase();
+  const rows = db.select()
+    .from(clientsTable)
+    .orderBy(desc(clientsTable.createdAt))
+    .limit(limit)
+    .offset(offset)
+    .all();
+  return rows.map(mapToClient);
+};
+
+const getClientsCount = () => {
+  const db = getDatabase();
+  const sqliteDb = require("./db").getSqliteDatabase();
+  const result = sqliteDb.prepare("SELECT COUNT(*) as count FROM clients").get();
+  return result?.count || 0;
+};
+
 const getClientById = (id) => {
   const db = getDatabase();
   const row = db.select().from(clientsTable).where(eq(clientsTable.id, id)).get();
@@ -169,6 +187,8 @@ const setAllClients = (clientsList) => {
 
 module.exports = {
   getAllClients,
+  getClientsPaginated,
+  getClientsCount,
   getClientById,
   createClient,
   updateClient,

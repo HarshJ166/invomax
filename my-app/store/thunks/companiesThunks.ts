@@ -32,6 +32,27 @@ export const fetchCompanies = createAsyncThunk(
   }
 );
 
+interface FetchCompaniesPaginatedPayload {
+  limit?: number;
+  offset?: number;
+}
+
+export const fetchCompaniesPaginated = createAsyncThunk(
+  "companies/fetchCompaniesPaginated",
+  async (payload: FetchCompaniesPaginatedPayload = { limit: 10, offset: 0 }, { dispatch, rejectWithValue }) => {
+    try {
+      const { limit = 10, offset = 0 } = payload;
+      const result = await dbService.companies.getPaginated(limit, offset);
+      const typedCompanies = result.data as Company[];
+      dispatch(setCompanies(typedCompanies));
+      return { data: typedCompanies, total: result.total };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch companies";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 export const createCompanyThunk = createAsyncThunk(
   "companies/createCompany",
   async (payload: CreateCompanyPayload, { dispatch, rejectWithValue }) => {

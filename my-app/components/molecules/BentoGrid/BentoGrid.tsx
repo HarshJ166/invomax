@@ -2,12 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  FileText,
-  TrendingUp,
-  Package,
-  ArrowRight,
-} from "lucide-react";
+import { FileText, TrendingUp, Package, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/molecules/StatsCard/StatsCard";
 import {
@@ -81,17 +76,20 @@ export function BentoGrid({
   className,
 }: BentoGridProps) {
   const router = useRouter();
-  const [selectedCompanyId, setSelectedCompanyId] = React.useState<string>("all");
+  const [selectedCompanyId, setSelectedCompanyId] =
+    React.useState<string>("all");
 
   const stats = React.useMemo(
-    () => calculateStats(companies, invoices, selectedCompanyId === "all" ? undefined : selectedCompanyId),
+    () =>
+      calculateStats(
+        companies,
+        invoices,
+        selectedCompanyId === "all" ? undefined : selectedCompanyId
+      ),
     [companies, invoices, selectedCompanyId]
   );
 
-  const randomItems = React.useMemo(
-    () => getRandomItems(items, 3),
-    [items]
-  );
+  const randomItems = React.useMemo(() => getRandomItems(items, 3), [items]);
 
   const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
   const descriptionText = selectedCompany
@@ -120,8 +118,11 @@ export function BentoGrid({
                 <CardTitle className="text-base font-bold text-black dark:text-black">
                   Total Invoice Amount
                 </CardTitle>
-                <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
-                  <SelectTrigger className="w-[200px] h-8 text-sm">
+                <Select
+                  value={selectedCompanyId}
+                  onValueChange={setSelectedCompanyId}
+                >
+                  <SelectTrigger className="w-[25%] h-8 text-sm">
                     <SelectValue placeholder="Select company" />
                   </SelectTrigger>
                   <SelectContent>
@@ -140,7 +141,8 @@ export function BentoGrid({
             </CardHeader>
             <CardContent className="pt-0">
               <div className="text-3xl font-semibold text-black dark:text-black">
-                ₹{stats.totalAmount.toLocaleString("en-IN", {
+                ₹
+                {stats.totalAmount.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -233,7 +235,8 @@ export function BentoGrid({
                   >
                     <span className="truncate flex-1">{item.itemName}</span>
                     <span className="text-muted-foreground ml-2 whitespace-nowrap">
-                      Stock: {item.qtyAvailable}{item.unit ? ` ${item.unit}` : ""}
+                      Stock: {item.qtyAvailable}
+                      {item.unit ? ` ${item.unit}` : ""}
                     </span>
                   </div>
                 ))
@@ -249,4 +252,3 @@ export function BentoGrid({
     </div>
   );
 }
-

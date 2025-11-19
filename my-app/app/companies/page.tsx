@@ -15,10 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { Company } from "@/lib/types";
 import {
   fetchCompanies,
+  fetchCompaniesPaginated,
   createCompanyThunk,
   updateCompanyThunk,
   deleteCompanyThunk,
@@ -60,7 +61,7 @@ function CompanyDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[85%] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Company Details</DialogTitle>
           <DialogDescription>
@@ -200,6 +201,23 @@ function CompanyDetailsDialog({
 
 export default function CompaniesPage() {
   const companies = useAppSelector((state) => state.companies.companies);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
+  const pageSize = 10;
+  const dispatch = useAppDispatch();
+
+  React.useEffect(() => {
+    const loadPage = async () => {
+      const offset = (currentPage - 1) * pageSize;
+      const result = await dispatch(
+        fetchCompaniesPaginated({ limit: pageSize, offset })
+      );
+      if (fetchCompaniesPaginated.fulfilled.match(result)) {
+        setTotal(result.payload.total);
+      }
+    };
+    loadPage();
+  }, [currentPage, dispatch]);
   
   const {
     dialogOpen,
@@ -207,7 +225,7 @@ export default function CompaniesPage() {
     formData: companyData,
     setFormData: setCompanyData,
     selectedEntity: selectedCompany,
-    handleRefresh,
+    handleRefresh: originalHandleRefresh,
     handleCreate,
     handleEdit,
     handleDelete,
@@ -228,6 +246,11 @@ export default function CompaniesPage() {
     createPayloadKey: "company",
     getEntityName: (company) => company.companyName,
   });
+
+  const handleRefresh = () => {
+    setCurrentPage(1);
+    originalHandleRefresh();
+  };
 
   const columns: Column<Company>[] = [
     {
@@ -297,6 +320,13 @@ export default function CompaniesPage() {
         createButtonLabel="Add Company"
         emptyTitle="No companies found"
         emptyDescription="Get started by adding your first company."
+        pagination={{
+          enabled: true,
+          pageSize,
+          currentPage,
+          total,
+          onPageChange: setCurrentPage,
+        }}
       />
       <CompaniesDialog
         open={dialogOpen}
