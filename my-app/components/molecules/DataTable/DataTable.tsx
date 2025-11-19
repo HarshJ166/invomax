@@ -71,7 +71,7 @@ interface DataTableProps<T> {
   };
 }
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends { id?: string | number }>({
   data,
   columns,
   onCreate,

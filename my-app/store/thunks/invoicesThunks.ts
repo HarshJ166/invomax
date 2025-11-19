@@ -60,11 +60,12 @@ export const createInvoiceThunk = createAsyncThunk(
       const invoiceId = payload.invoice.id || `invoice-${Date.now()}`;
       console.log("[createInvoiceThunk] Using invoice ID:", invoiceId);
 
+      const now = new Date().toISOString();
       const newInvoice: Invoice = {
         ...payload.invoice,
         id: invoiceId,
-        createdAt: payload.invoice.createdAt || new Date().toISOString(),
-        updatedAt: payload.invoice.updatedAt || new Date().toISOString(),
+        createdAt: "createdAt" in payload.invoice && payload.invoice.createdAt ? payload.invoice.createdAt : now,
+        updatedAt: "updatedAt" in payload.invoice && payload.invoice.updatedAt ? payload.invoice.updatedAt : now,
       };
 
       console.log("[createInvoiceThunk] Prepared invoice object:", {

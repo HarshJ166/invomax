@@ -1,61 +1,71 @@
+import {
+  Company,
+  Client,
+  Item,
+  Invoice,
+  DealerPayment,
+  Archive,
+  DealerArchive,
+} from "./types";
+
 declare global {
   interface Window {
     electronAPI?: {
       db: {
         getPath: () => Promise<string>;
         companies: {
-          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: unknown[]; total?: number; error?: string }>;
+          getAll: () => Promise<{ success: boolean; data?: Company[]; error?: string }>;
+          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: Company[]; total?: number; error?: string }>;
           getCount: () => Promise<{ success: boolean; count?: number; error?: string }>;
-          create: (company: unknown) => Promise<{ success: boolean; error?: string }>;
-          update: (id: string, company: unknown) => Promise<{ success: boolean; error?: string }>;
+          create: (company: Company | Partial<Company>) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, company: Company | Partial<Company>) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
-          setAll: (companies: unknown[]) => Promise<{ success: boolean; error?: string }>;
+          setAll: (companies: Company[]) => Promise<{ success: boolean; error?: string }>;
         };
         clients: {
-          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: unknown[]; total?: number; error?: string }>;
+          getAll: () => Promise<{ success: boolean; data?: Client[]; error?: string }>;
+          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: Client[]; total?: number; error?: string }>;
           getCount: () => Promise<{ success: boolean; count?: number; error?: string }>;
-          create: (client: unknown) => Promise<{ success: boolean; error?: string }>;
-          update: (id: string, client: unknown) => Promise<{ success: boolean; error?: string }>;
+          create: (client: Client | Partial<Client>) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, client: Client | Partial<Client>) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
-          setAll: (clients: unknown[]) => Promise<{ success: boolean; error?: string }>;
+          setAll: (clients: Client[]) => Promise<{ success: boolean; error?: string }>;
         };
         items: {
-          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: unknown[]; total?: number; error?: string }>;
+          getAll: () => Promise<{ success: boolean; data?: Item[]; error?: string }>;
+          getPaginated: (limit: number, offset: number) => Promise<{ success: boolean; data?: Item[]; total?: number; error?: string }>;
           getCount: () => Promise<{ success: boolean; count?: number; error?: string }>;
-          create: (item: unknown) => Promise<{ success: boolean; error?: string }>;
-          update: (id: string, item: unknown) => Promise<{ success: boolean; error?: string }>;
+          create: (item: Item | Partial<Item>) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, item: Item | Partial<Item>) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
-          setAll: (items: unknown[]) => Promise<{ success: boolean; error?: string }>;
+          setAll: (items: Item[]) => Promise<{ success: boolean; error?: string }>;
         };
         invoices: {
-          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          create: (invoice: unknown) => Promise<{ success: boolean; error?: string }>;
-          update: (id: string, invoice: unknown) => Promise<{ success: boolean; error?: string }>;
+          getAll: () => Promise<{ success: boolean; data?: Invoice[]; error?: string }>;
+          create: (invoice: Invoice | Partial<Invoice>) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, invoice: Invoice | Partial<Invoice>) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
-          getById: (id: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
-          getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
-          archive: (invoiceId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+          getById: (id: string) => Promise<{ success: boolean; data?: Invoice; error?: string }>;
+          getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: Invoice; error?: string }>;
+          archive: (invoiceId: string) => Promise<{ success: boolean; data?: Archive; error?: string }>;
         };
         archives: {
-          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+          getAll: () => Promise<{ success: boolean; data?: Archive[]; error?: string }>;
+          restore: (archiveId: string) => Promise<{ success: boolean; data?: Invoice; error?: string }>;
         };
         dealers: {
-          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          getByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          getByCompanyIdAndClientId: (companyId: string, clientId: string) => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          getById: (id: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
-          create: (dealer: unknown) => Promise<{ success: boolean; error?: string }>;
-          update: (id: string, dealer: unknown) => Promise<{ success: boolean; error?: string }>;
+          getAll: () => Promise<{ success: boolean; data?: DealerPayment[]; error?: string }>;
+          getByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: DealerPayment[]; error?: string }>;
+          getByCompanyIdAndClientId: (companyId: string, clientId: string) => Promise<{ success: boolean; data?: DealerPayment[]; error?: string }>;
+          getById: (id: string) => Promise<{ success: boolean; data?: DealerPayment; error?: string }>;
+          create: (dealer: DealerPayment | Partial<DealerPayment>) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, dealer: DealerPayment | Partial<DealerPayment>) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
-          archive: (dealerId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+          archive: (dealerId: string) => Promise<{ success: boolean; data?: DealerArchive; error?: string }>;
         };
         dealerArchives: {
-          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
-          restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+          getAll: () => Promise<{ success: boolean; data?: DealerArchive[]; error?: string }>;
+          restore: (archiveId: string) => Promise<{ success: boolean; data?: DealerPayment; error?: string }>;
         };
       };
     };
@@ -69,61 +79,115 @@ const getElectronAPI = () => {
   return null;
 };
 
+const handleGetAll = async <T>(
+  apiCall: () => Promise<{ success: boolean; data?: T[]; error?: string }>,
+  errorMessage: string
+): Promise<T[]> => {
+  try {
+    const result = await apiCall();
+    return result.success && result.data ? result.data : [];
+  } catch (error) {
+    console.error(errorMessage, error);
+    return [];
+  }
+};
+
+const handleGetPaginated = async <T>(
+  apiCall: () => Promise<{ success: boolean; data?: T[]; total?: number; error?: string }>,
+  errorMessage: string
+): Promise<{ data: T[]; total: number }> => {
+  try {
+    const result = await apiCall();
+    if (result.success && result.data) {
+      return { data: result.data, total: result.total || 0 };
+    }
+    return { data: [], total: 0 };
+  } catch (error) {
+    console.error(errorMessage, error);
+    return { data: [], total: 0 };
+  }
+};
+
+const handleGetCount = async (
+  apiCall: () => Promise<{ success: boolean; count?: number; error?: string }>,
+  errorMessage: string
+): Promise<number> => {
+  try {
+    const result = await apiCall();
+    return result.success && result.count !== undefined ? result.count : 0;
+  } catch (error) {
+    console.error(errorMessage, error);
+    return 0;
+  }
+};
+
+const handleMutation = async (
+  apiCall: () => Promise<{ success: boolean; error?: string }>,
+  errorMessage: string
+): Promise<{ success: boolean }> => {
+  try {
+    return await apiCall();
+  } catch (error) {
+    console.error(errorMessage, error);
+    return { success: false };
+  }
+};
+
 interface DbService {
   getPath: () => Promise<string>;
   companies: {
-    getAll: () => Promise<unknown[]>;
-    getPaginated: (limit: number, offset: number) => Promise<{ data: unknown[]; total: number }>;
+    getAll: () => Promise<Company[]>;
+    getPaginated: (limit: number, offset: number) => Promise<{ data: Company[]; total: number }>;
     getCount: () => Promise<number>;
-    create: (company: unknown) => Promise<{ success: boolean }>;
-    update: (id: string, company: unknown) => Promise<{ success: boolean }>;
+    create: (company: Company | Partial<Company>) => Promise<{ success: boolean }>;
+    update: (id: string, company: Company | Partial<Company>) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
-    setAll: (companies: unknown[]) => Promise<{ success: boolean }>;
+    setAll: (companies: Company[]) => Promise<{ success: boolean }>;
   };
   clients: {
-    getAll: () => Promise<unknown[]>;
-    getPaginated: (limit: number, offset: number) => Promise<{ data: unknown[]; total: number }>;
+    getAll: () => Promise<Client[]>;
+    getPaginated: (limit: number, offset: number) => Promise<{ data: Client[]; total: number }>;
     getCount: () => Promise<number>;
-    create: (client: unknown) => Promise<{ success: boolean }>;
-    update: (id: string, client: unknown) => Promise<{ success: boolean }>;
+    create: (client: Client | Partial<Client>) => Promise<{ success: boolean }>;
+    update: (id: string, client: Client | Partial<Client>) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
-    setAll: (clients: unknown[]) => Promise<{ success: boolean }>;
+    setAll: (clients: Client[]) => Promise<{ success: boolean }>;
   };
   items: {
-    getAll: () => Promise<unknown[]>;
-    getPaginated: (limit: number, offset: number) => Promise<{ data: unknown[]; total: number }>;
+    getAll: () => Promise<Item[]>;
+    getPaginated: (limit: number, offset: number) => Promise<{ data: Item[]; total: number }>;
     getCount: () => Promise<number>;
-    create: (item: unknown) => Promise<{ success: boolean }>;
-    update: (id: string, item: unknown) => Promise<{ success: boolean }>;
+    create: (item: Item | Partial<Item>) => Promise<{ success: boolean }>;
+    update: (id: string, item: Item | Partial<Item>) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
-    setAll: (items: unknown[]) => Promise<{ success: boolean }>;
+    setAll: (items: Item[]) => Promise<{ success: boolean }>;
   };
   invoices: {
-    getAll: () => Promise<unknown[]>;
-    create: (invoice: unknown) => Promise<{ success: boolean; error?: string }>;
-    update: (id: string, invoice: unknown) => Promise<{ success: boolean }>;
+    getAll: () => Promise<Invoice[]>;
+    create: (invoice: Invoice | Partial<Invoice>) => Promise<{ success: boolean; error?: string }>;
+    update: (id: string, invoice: Invoice | Partial<Invoice>) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
-    getById: (id: string) => Promise<{ success: boolean; data?: unknown }>;
-    getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown }>;
-    archive: (invoiceId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+    getById: (id: string) => Promise<{ success: boolean; data?: Invoice }>;
+    getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: Invoice }>;
+    archive: (invoiceId: string) => Promise<{ success: boolean; data?: Archive; error?: string }>;
   };
   archives: {
-    getAll: () => Promise<unknown[]>;
-    restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+    getAll: () => Promise<Archive[]>;
+    restore: (archiveId: string) => Promise<{ success: boolean; data?: Invoice; error?: string }>;
   };
   dealers: {
-    getAll: () => Promise<unknown[]>;
-    getByCompanyId: (companyId: string) => Promise<unknown[]>;
-    getByCompanyIdAndClientId: (companyId: string, clientId: string) => Promise<unknown[]>;
-    getById: (id: string) => Promise<{ success: boolean; data?: unknown }>;
-    create: (dealer: unknown) => Promise<{ success: boolean }>;
-    update: (id: string, dealer: unknown) => Promise<{ success: boolean }>;
+    getAll: () => Promise<DealerPayment[]>;
+    getByCompanyId: (companyId: string) => Promise<DealerPayment[]>;
+    getByCompanyIdAndClientId: (companyId: string, clientId: string) => Promise<DealerPayment[]>;
+    getById: (id: string) => Promise<{ success: boolean; data?: DealerPayment }>;
+    create: (dealer: DealerPayment | Partial<DealerPayment>) => Promise<{ success: boolean }>;
+    update: (id: string, dealer: DealerPayment | Partial<DealerPayment>) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
-    archive: (dealerId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+    archive: (dealerId: string) => Promise<{ success: boolean; data?: DealerArchive; error?: string }>;
   };
   dealerArchives: {
-    getAll: () => Promise<unknown[]>;
-    restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+    getAll: () => Promise<DealerArchive[]>;
+    restore: (archiveId: string) => Promise<{ success: boolean; data?: DealerPayment; error?: string }>;
   };
 }
 
@@ -139,237 +203,114 @@ export const dbService: DbService = {
     }
   },
   companies: {
-    getAll: async () => {
+    getAll: () => {
       const api = getElectronAPI();
-      if (!api) return [];
-      try {
-        const result = await api.db.companies.getAll();
-        return result.success && result.data ? result.data : [];
-      } catch (error) {
-        console.error("Error getting companies:", error);
-        return [];
-      }
+      if (!api) return Promise.resolve([]);
+      return handleGetAll(() => api.db.companies.getAll(), "Error getting companies:");
     },
-    getPaginated: async (limit: number, offset: number) => {
+    getPaginated: (limit: number, offset: number) => {
       const api = getElectronAPI();
-      if (!api) return { data: [], total: 0 };
-      try {
-        const result = await api.db.companies.getPaginated(limit, offset);
-        if (result.success && result.data) {
-          return { data: result.data, total: result.total || 0 };
-        }
-        return { data: [], total: 0 };
-      } catch (error) {
-        console.error("Error getting paginated companies:", error);
-        return { data: [], total: 0 };
-      }
+      if (!api) return Promise.resolve({ data: [], total: 0 });
+      return handleGetPaginated(() => api.db.companies.getPaginated(limit, offset), "Error getting paginated companies:");
     },
-    getCount: async () => {
+    getCount: () => {
       const api = getElectronAPI();
-      if (!api) return 0;
-      try {
-        const result = await api.db.companies.getCount();
-        return result.success && result.count !== undefined ? result.count : 0;
-      } catch (error) {
-        console.error("Error getting companies count:", error);
-        return 0;
-      }
+      if (!api) return Promise.resolve(0);
+      return handleGetCount(() => api.db.companies.getCount(), "Error getting companies count:");
     },
-    create: async (company: unknown) => {
+    create: (company: Company | Partial<Company>) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.companies.create(company);
-      } catch (error) {
-        console.error("Error creating company:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.companies.create(company), "Error creating company:");
     },
-    update: async (id: string, company: unknown) => {
+    update: (id: string, company: Company | Partial<Company>) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.companies.update(id, company);
-      } catch (error) {
-        console.error("Error updating company:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.companies.update(id, company), "Error updating company:");
     },
-    delete: async (id: string) => {
+    delete: (id: string) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.companies.delete(id);
-      } catch (error) {
-        console.error("Error deleting company:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.companies.delete(id), "Error deleting company:");
     },
-    setAll: async (companies: unknown[]) => {
+    setAll: (companies: Company[]) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.companies.setAll(companies);
-      } catch (error) {
-        console.error("Error setting companies:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.companies.setAll(companies), "Error setting companies:");
     },
   },
   clients: {
-    getAll: async () => {
+    getAll: () => {
       const api = getElectronAPI();
-      if (!api) return [];
-      try {
-        const result = await api.db.clients.getAll();
-        return result.success && result.data ? result.data : [];
-      } catch (error) {
-        console.error("Error getting clients:", error);
-        return [];
-      }
+      if (!api) return Promise.resolve([]);
+      return handleGetAll(() => api.db.clients.getAll(), "Error getting clients:");
     },
-    getPaginated: async (limit: number, offset: number) => {
+    getPaginated: (limit: number, offset: number) => {
       const api = getElectronAPI();
-      if (!api) return { data: [], total: 0 };
-      try {
-        const result = await api.db.clients.getPaginated(limit, offset);
-        if (result.success && result.data) {
-          return { data: result.data, total: result.total || 0 };
-        }
-        return { data: [], total: 0 };
-      } catch (error) {
-        console.error("Error getting paginated clients:", error);
-        return { data: [], total: 0 };
-      }
+      if (!api) return Promise.resolve({ data: [], total: 0 });
+      return handleGetPaginated(() => api.db.clients.getPaginated(limit, offset), "Error getting paginated clients:");
     },
-    getCount: async () => {
+    getCount: () => {
       const api = getElectronAPI();
-      if (!api) return 0;
-      try {
-        const result = await api.db.clients.getCount();
-        return result.success && result.count !== undefined ? result.count : 0;
-      } catch (error) {
-        console.error("Error getting clients count:", error);
-        return 0;
-      }
+      if (!api) return Promise.resolve(0);
+      return handleGetCount(() => api.db.clients.getCount(), "Error getting clients count:");
     },
-    create: async (client: unknown) => {
+    create: (client: Client | Partial<Client>) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.clients.create(client);
-      } catch (error) {
-        console.error("Error creating client:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.clients.create(client), "Error creating client:");
     },
-    update: async (id: string, client: unknown) => {
+    update: (id: string, client: Client | Partial<Client>) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.clients.update(id, client);
-      } catch (error) {
-        console.error("Error updating client:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.clients.update(id, client), "Error updating client:");
     },
-    delete: async (id: string) => {
+    delete: (id: string) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.clients.delete(id);
-      } catch (error) {
-        console.error("Error deleting client:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.clients.delete(id), "Error deleting client:");
     },
-    setAll: async (clients: unknown[]) => {
+    setAll: (clients: Client[]) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.clients.setAll(clients);
-      } catch (error) {
-        console.error("Error setting clients:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.clients.setAll(clients), "Error setting clients:");
     },
   },
   items: {
-    getAll: async () => {
+    getAll: () => {
       const api = getElectronAPI();
-      if (!api) return [];
-      try {
-        const result = await api.db.items.getAll();
-        return result.success && result.data ? result.data : [];
-      } catch (error) {
-        console.error("Error getting items:", error);
-        return [];
-      }
+      if (!api) return Promise.resolve([]);
+      return handleGetAll(() => api.db.items.getAll(), "Error getting items:");
     },
-    getPaginated: async (limit: number, offset: number) => {
+    getPaginated: (limit: number, offset: number) => {
       const api = getElectronAPI();
-      if (!api) return { data: [], total: 0 };
-      try {
-        const result = await api.db.items.getPaginated(limit, offset);
-        if (result.success && result.data) {
-          return { data: result.data, total: result.total || 0 };
-        }
-        return { data: [], total: 0 };
-      } catch (error) {
-        console.error("Error getting paginated items:", error);
-        return { data: [], total: 0 };
-      }
+      if (!api) return Promise.resolve({ data: [], total: 0 });
+      return handleGetPaginated(() => api.db.items.getPaginated(limit, offset), "Error getting paginated items:");
     },
-    getCount: async () => {
+    getCount: () => {
       const api = getElectronAPI();
-      if (!api) return 0;
-      try {
-        const result = await api.db.items.getCount();
-        return result.success && result.count !== undefined ? result.count : 0;
-      } catch (error) {
-        console.error("Error getting items count:", error);
-        return 0;
-      }
+      if (!api) return Promise.resolve(0);
+      return handleGetCount(() => api.db.items.getCount(), "Error getting items count:");
     },
-    create: async (item: unknown) => {
+    create: (item: Item | Partial<Item>) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.items.create(item);
-      } catch (error) {
-        console.error("Error creating item:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.items.create(item), "Error creating item:");
     },
-    update: async (id: string, item: unknown) => {
+    update: (id: string, item: Item | Partial<Item>) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.items.update(id, item);
-      } catch (error) {
-        console.error("Error updating item:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.items.update(id, item), "Error updating item:");
     },
-    delete: async (id: string) => {
+    delete: (id: string) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.items.delete(id);
-      } catch (error) {
-        console.error("Error deleting item:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.items.delete(id), "Error deleting item:");
     },
-    setAll: async (items: unknown[]) => {
+    setAll: (items: Item[]) => {
       const api = getElectronAPI();
-      if (!api) return { success: false };
-      try {
-        return await api.db.items.setAll(items);
-      } catch (error) {
-        console.error("Error setting items:", error);
-        return { success: false };
-      }
+      if (!api) return Promise.resolve({ success: false });
+      return handleMutation(() => api.db.items.setAll(items), "Error setting items:");
     },
   },
   invoices: {
@@ -386,7 +327,7 @@ export const dbService: DbService = {
         console.log("[db-service] invoices.getAll result:", {
           success: result.success,
           count: invoices.length,
-          invoiceIds: invoices.map((inv: { id?: string }) => inv.id),
+          invoiceIds: invoices.map((inv) => inv.id),
         });
         return invoices;
       } catch (error) {
@@ -394,13 +335,13 @@ export const dbService: DbService = {
         return [];
       }
     },
-    create: async (invoice: unknown) => {
+    create: async (invoice: Invoice | Partial<Invoice>) => {
       console.log("[db-service] invoices.create called");
       console.log("[db-service] Invoice data:", {
-        id: (invoice as { id?: string })?.id,
-        companyId: (invoice as { companyId?: string })?.companyId,
-        clientId: (invoice as { clientId?: string })?.clientId,
-        invoiceNumber: (invoice as { invoiceNumber?: string })?.invoiceNumber,
+        id: "id" in invoice ? invoice.id : undefined,
+        companyId: "companyId" in invoice ? invoice.companyId : undefined,
+        clientId: "clientId" in invoice ? invoice.clientId : undefined,
+        invoiceNumber: "invoiceNumber" in invoice ? invoice.invoiceNumber : undefined,
       });
 
       const api = getElectronAPI();
@@ -418,9 +359,9 @@ export const dbService: DbService = {
           console.log("[db-service] Invoice created successfully via IPC");
           console.log("[db-service] Verifying invoice exists...");
           const verifyResult = await api.db.invoices.getAll();
-          const invoiceId = (invoice as { id?: string })?.id;
+          const invoiceId = "id" in invoice ? invoice.id : undefined;
           if (invoiceId && verifyResult.success && verifyResult.data) {
-            const exists = (verifyResult.data as Array<{ id?: string }>).some(
+            const exists = verifyResult.data.some(
               (inv) => inv.id === invoiceId
             );
             console.log("[db-service] Verification:", {
@@ -440,7 +381,7 @@ export const dbService: DbService = {
         return { success: false, error: errorMessage };
       }
     },
-    update: async (id: string, invoice: unknown) => {
+    update: async (id: string, invoice: Invoice | Partial<Invoice>) => {
       const api = getElectronAPI();
       if (!api) return { success: false };
       try {
@@ -558,7 +499,7 @@ export const dbService: DbService = {
         return { success: false };
       }
     },
-    create: async (dealer: unknown) => {
+    create: async (dealer: DealerPayment | Partial<DealerPayment>) => {
       const api = getElectronAPI();
       if (!api) return { success: false };
       try {
@@ -568,7 +509,7 @@ export const dbService: DbService = {
         return { success: false };
       }
     },
-    update: async (id: string, dealer: unknown) => {
+    update: async (id: string, dealer: DealerPayment | Partial<DealerPayment>) => {
       const api = getElectronAPI();
       if (!api) return { success: false };
       try {

@@ -14,7 +14,7 @@ const stripFileObjects = (data: CompanyFormData): Omit<CompanyFormData, "logo" |
   logoPreview: string;
   signaturePreview: string;
 } => {
-  const { logo, signature, ...rest } = data;
+  const { ...rest } = data;
   return {
     ...rest,
     logoPreview: data.logoPreview || "",

@@ -2,16 +2,16 @@ import { useState, useCallback, useMemo } from "react";
 import { useAppDispatch } from "@/store/hooks";
 import { AsyncThunk } from "@reduxjs/toolkit";
 
-interface CrudThunks<TEntity, TFormData> {
-  fetch: AsyncThunk<TEntity[], void, Record<string, unknown>>;
+interface CrudThunks<TEntity extends { id: string }> {
+  fetch: AsyncThunk<TEntity[], unknown, Record<string, unknown>>;
   create: AsyncThunk<TEntity, unknown, Record<string, unknown>>;
   update: AsyncThunk<unknown, unknown, Record<string, unknown>>;
   delete: AsyncThunk<string, { id: string }, Record<string, unknown>>;
 }
 
-interface UseCrudPageOptions<TEntity, TFormData> {
+interface UseCrudPageOptions<TEntity extends { id: string }, TFormData> {
   initialFormData: TFormData;
-  thunks: CrudThunks<TEntity, TFormData>;
+  thunks: CrudThunks<TEntity>;
   createPayloadKey?: string;
   updatePayloadKey?: string;
   getEntityName?: (entity: TEntity) => string;
@@ -37,7 +37,7 @@ export function useCrudPage<
   const [selectedEntity, setSelectedEntity] = useState<TEntity | null>(null);
 
   const handleRefresh = useCallback(async () => {
-    await dispatch(thunks.fetch());
+    await dispatch(thunks.fetch(undefined));
   }, [dispatch, thunks]);
 
   const handleCreate = useCallback(() => {
@@ -79,13 +79,13 @@ export function useCrudPage<
             thunks.update({
               id: editingId,
               [updatePayloadKey]: data,
-            } as { id: string; [key: string]: TFormData | Partial<TEntity> })
+            } as { id: string } & Record<string, TFormData | Partial<TEntity>>)
           );
         } else {
           await dispatch(
             thunks.create({
               [createPayloadKey]: data,
-            } as { [key: string]: TFormData })
+            } as Record<string, TFormData>)
           );
         }
         setDialogOpen(false);

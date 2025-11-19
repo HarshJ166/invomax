@@ -16,6 +16,7 @@ import {
   updateItemThunk,
   deleteItemThunk,
 } from "@/store/thunks/itemsThunks";
+import { AsyncThunk } from "@reduxjs/toolkit";
 import { useCrudPage } from "@/hooks/use-crud-page";
 
 const initialItemData: ItemFormData = {
@@ -62,10 +63,10 @@ export default function ItemsPage() {
   } = useCrudPage<Item, ItemFormData>({
     initialFormData: initialItemData,
     thunks: {
-      fetch: fetchItems,
-      create: createItemThunk,
-      update: updateItemThunk,
-      delete: deleteItemThunk,
+      fetch: fetchItems as AsyncThunk<Item[], unknown, Record<string, unknown>>,
+      create: createItemThunk as AsyncThunk<Item, unknown, Record<string, unknown>>,
+      update: updateItemThunk as AsyncThunk<unknown, unknown, Record<string, unknown>>,
+      delete: deleteItemThunk as AsyncThunk<string, { id: string }, Record<string, unknown>>,
     },
     createPayloadKey: "item",
     getEntityName: (item) => item.itemName,

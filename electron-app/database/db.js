@@ -180,6 +180,9 @@ const createTables = () => {
     CREATE INDEX IF NOT EXISTS idx_invoices_invoice_date ON invoices(invoice_date);
     CREATE INDEX IF NOT EXISTS idx_archives_original_id ON archives(original_id);
     CREATE INDEX IF NOT EXISTS idx_archives_archived_at ON archives(archived_at);
+    CREATE INDEX IF NOT EXISTS idx_dealers_company_id ON dealers(company_id);
+    CREATE INDEX IF NOT EXISTS idx_dealers_client_id ON dealers(client_id);
+    CREATE INDEX IF NOT EXISTS idx_dealers_bill_date ON dealers(bill_date);
     CREATE TABLE IF NOT EXISTS dealer_archives (
       id TEXT PRIMARY KEY,
       original_id TEXT NOT NULL,
@@ -201,17 +204,6 @@ const createTables = () => {
       FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
     );
 
-    CREATE INDEX IF NOT EXISTS idx_companies_created_at ON companies(created_at);
-    CREATE INDEX IF NOT EXISTS idx_clients_created_at ON clients(created_at);
-    CREATE INDEX IF NOT EXISTS idx_items_created_at ON items(created_at);
-    CREATE INDEX IF NOT EXISTS idx_invoices_company_id ON invoices(company_id);
-    CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id);
-    CREATE INDEX IF NOT EXISTS idx_invoices_invoice_date ON invoices(invoice_date);
-    CREATE INDEX IF NOT EXISTS idx_archives_original_id ON archives(original_id);
-    CREATE INDEX IF NOT EXISTS idx_archives_archived_at ON archives(archived_at);
-    CREATE INDEX IF NOT EXISTS idx_dealers_company_id ON dealers(company_id);
-    CREATE INDEX IF NOT EXISTS idx_dealers_client_id ON dealers(client_id);
-    CREATE INDEX IF NOT EXISTS idx_dealers_bill_date ON dealers(bill_date);
     CREATE INDEX IF NOT EXISTS idx_dealer_archives_original_id ON dealer_archives(original_id);
     CREATE INDEX IF NOT EXISTS idx_dealer_archives_archived_at ON dealer_archives(archived_at);
   `);

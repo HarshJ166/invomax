@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const fetchData = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const [companiesResult, itemsResult, invoicesResult, dealersResult] = await Promise.all([
+      const [, , invoicesResult, dealersResult] = await Promise.all([
         dispatch(fetchCompanies()),
         dispatch(fetchItems()),
         dispatch(fetchInvoices()),

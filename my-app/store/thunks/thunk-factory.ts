@@ -1,16 +1,15 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { dbService } from "@/lib/db-service";
 
-interface DbServiceMethods {
-  getAll: () => Promise<unknown[]>;
-  create: (entity: unknown) => Promise<{ success: boolean }>;
-  update: (id: string, entity: unknown) => Promise<{ success: boolean }>;
+interface DbServiceMethods<TEntity> {
+  getAll: () => Promise<TEntity[]>;
+  create: (entity: TEntity | Partial<TEntity>) => Promise<{ success: boolean }>;
+  update: (id: string, entity: TEntity | Partial<TEntity>) => Promise<{ success: boolean }>;
   delete: (id: string) => Promise<{ success: boolean }>;
 }
 
-interface CreateThunkOptions<TEntity, TFormData> {
+interface CreateThunkOptions<TEntity extends { id: string }, TFormData extends Record<string, unknown>> {
   entityName: string;
-  dbService: DbServiceMethods;
+  dbService: DbServiceMethods<TEntity>;
   setAction: (entities: TEntity[]) => { type: string; payload: TEntity[] };
   addAction: (formData: TFormData) => { type: string; payload: TFormData };
   updateAction: (payload: { id: string; data: TFormData | Partial<TEntity> }) => {
@@ -40,9 +39,8 @@ export function createCrudThunks<TEntity extends { id: string }, TFormData exten
     async (_, { dispatch, rejectWithValue }) => {
       try {
         const entities = await dbMethods.getAll();
-        const typedEntities = entities as TEntity[];
-        dispatch(setAction(typedEntities));
-        return typedEntities;
+        dispatch(setAction(entities));
+        return entities;
       } catch (error) {
         const errorMessage =
           error instanceof Error
@@ -66,7 +64,7 @@ export function createCrudThunks<TEntity extends { id: string }, TFormData exten
           : ({
               ...formData,
               id: `${entityName}-${Date.now()}`,
-            } as TEntity);
+            } as unknown as TEntity);
 
         const result = await dbMethods.create(newEntity);
 
@@ -89,7 +87,7 @@ export function createCrudThunks<TEntity extends { id: string }, TFormData exten
   const updateThunk = createAsyncThunk(
     `${entityName}/update${entityName.charAt(0).toUpperCase() + entityName.slice(1)}`,
     async (
-      payload: { id: string; [key: string]: TFormData | Partial<TEntity> },
+      payload: { id: string } & Record<string, TFormData | Partial<TEntity>>,
       { dispatch, rejectWithValue, getState }
     ) => {
       try {
@@ -123,7 +121,8 @@ export function createCrudThunks<TEntity extends { id: string }, TFormData exten
           }
         }
 
-        const result = await dbMethods.update(payload.id, updateData);
+        const updatePayload = updateData as TEntity | Partial<TEntity>;
+        const result = await dbMethods.update(payload.id, updatePayload);
 
         if (!result.success) {
           return rejectWithValue(`Failed to update ${entityName} in database`);
@@ -132,10 +131,10 @@ export function createCrudThunks<TEntity extends { id: string }, TFormData exten
         dispatch(
           updateAction({
             id: payload.id,
-            data: updateData as TFormData | Partial<TEntity>,
+            data: updatePayload,
           })
         );
-        return { id: payload.id, data: updateData };
+        return { id: payload.id, data: updatePayload };
       } catch (error) {
         const errorMessage =
           error instanceof Error

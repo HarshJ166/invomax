@@ -3,12 +3,12 @@
 import * as React from "react";
 import { DataTable, Column } from "@/components/molecules/DataTable/DataTable";
 import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { fetchCompanies } from "@/store/thunks/companiesThunks";
 import { fetchClients } from "@/store/thunks/clientsThunks";
 import { fetchArchives, restoreArchiveThunk } from "@/store/thunks/archivesThunks";
 import { fetchDealerArchives, restoreDealerArchiveThunk } from "@/store/thunks/dealerArchivesThunks";
-import { Company, Client, DealerPayment } from "@/lib/types";
+import { DealerPayment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { RotateCcwIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -50,8 +50,6 @@ interface DealerArchiveWithDetails extends DealerArchive {
 
 export default function RecycleBinPage() {
   const dispatch = useAppDispatch();
-  const companies = useAppSelector((state) => state.companies.companies);
-  const clients = useAppSelector((state) => state.clients.clients);
   const [archivesWithDetails, setArchivesWithDetails] = React.useState<ArchiveWithDetails[]>([]);
   const [dealerArchivesWithDetails, setDealerArchivesWithDetails] = React.useState<DealerArchiveWithDetails[]>([]);
   const [loading, setLoading] = React.useState(true);

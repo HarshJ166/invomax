@@ -24,6 +24,7 @@ import {
   updateCompanyThunk,
   deleteCompanyThunk,
 } from "@/store/thunks/companiesThunks";
+import { AsyncThunk } from "@reduxjs/toolkit";
 import { useCrudPage } from "@/hooks/use-crud-page";
 
 const initialCompanyData: CompanyFormData = {
@@ -238,10 +239,10 @@ export default function CompaniesPage() {
   } = useCrudPage<Company, CompanyFormData>({
     initialFormData: initialCompanyData,
     thunks: {
-      fetch: fetchCompanies,
-      create: createCompanyThunk,
-      update: updateCompanyThunk,
-      delete: deleteCompanyThunk,
+      fetch: fetchCompanies as AsyncThunk<Company[], unknown, Record<string, unknown>>,
+      create: createCompanyThunk as AsyncThunk<Company, unknown, Record<string, unknown>>,
+      update: updateCompanyThunk as AsyncThunk<unknown, unknown, Record<string, unknown>>,
+      delete: deleteCompanyThunk as AsyncThunk<string, { id: string }, Record<string, unknown>>,
     },
     createPayloadKey: "company",
     getEntityName: (company) => company.companyName,

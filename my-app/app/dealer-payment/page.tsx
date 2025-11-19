@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { DealerPayment, Company, Client } from "@/lib/types";
+import { DealerPayment } from "@/lib/types";
 import {
   fetchDealersByCompanyId,
   fetchDealersByCompanyIdAndClientId,
@@ -26,6 +26,7 @@ import {
 } from "@/store/thunks/dealersThunks";
 import { fetchCompanies } from "@/store/thunks/companiesThunks";
 import { fetchClients } from "@/store/thunks/clientsThunks";
+import { AsyncThunk } from "@reduxjs/toolkit";
 import { useCrudPage } from "@/hooks/use-crud-page";
 
 const initialDealerData: DealerPaymentFormData = {
@@ -83,7 +84,6 @@ export default function DealerPaymentPage() {
     dialogOpen,
     formData: dealerData,
     setFormData: setDealerData,
-    selectedEntity: selectedDealer,
     handleCreate,
     handleEdit,
     handleDelete,
@@ -94,10 +94,10 @@ export default function DealerPaymentPage() {
   } = useCrudPage<DealerPayment, DealerPaymentFormData>({
     initialFormData: initialDealerData,
     thunks: {
-      fetch: fetchDealersByCompanyId,
-      create: createDealerThunk,
-      update: updateDealerThunk,
-      delete: deleteDealerThunk,
+      fetch: fetchDealersByCompanyId as AsyncThunk<DealerPayment[], unknown, Record<string, unknown>>,
+      create: createDealerThunk as AsyncThunk<DealerPayment, unknown, Record<string, unknown>>,
+      update: updateDealerThunk as AsyncThunk<unknown, unknown, Record<string, unknown>>,
+      delete: deleteDealerThunk as AsyncThunk<string, { id: string }, Record<string, unknown>>,
     },
     createPayloadKey: "dealer",
     updatePayloadKey: "dealer",
@@ -192,10 +192,6 @@ export default function DealerPaymentPage() {
     return `${client.salutation ? client.salutation + ". " : ""}${client.firstName} ${client.lastName}`;
   };
 
-  const getCompanyName = (companyId: string): string => {
-    const company = companies.find((c) => c.id === companyId);
-    return company?.companyName || "Unknown";
-  };
 
   const columns: Column<DealerPayment>[] = [
     {

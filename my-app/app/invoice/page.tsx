@@ -7,8 +7,8 @@ import { useSearchParams } from "next/navigation";
 
 function InvoicePageContent() {
   const searchParams = useSearchParams();
-  const editInvoiceId = searchParams.get("edit");
-  const refreshRef = React.useRef<(() => Promise<void>) | undefined>();
+  const editInvoiceId = searchParams?.get("edit") ?? null;
+  const refreshRef = React.useRef<(() => Promise<void>) | undefined>(undefined);
 
   const handleRefresh = React.useCallback(async () => {
     if (refreshRef.current) {

@@ -52,3 +52,13 @@ export interface DealerPayment {
   updatedAt: string;
 }
 
+export interface Archive extends Invoice {
+  originalId: string;
+  archivedAt: string;
+}
+
+export interface DealerArchive extends DealerPayment {
+  originalId: string;
+  archivedAt: string;
+}
+

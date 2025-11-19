@@ -327,18 +327,10 @@ export default function ClientsPage() {
   } = useCrudPage<Client, ClientFormData>({
     initialFormData: initialClientData,
     thunks: {
-      fetch: fetchClients,
-      create: createClientThunk as unknown as AsyncThunk<
-        Client,
-        unknown,
-        Record<string, unknown>
-      >,
-      update: updateClientThunk as unknown as AsyncThunk<
-        unknown,
-        unknown,
-        Record<string, unknown>
-      >,
-      delete: deleteClientThunk,
+      fetch: fetchClients as AsyncThunk<Client[], unknown, Record<string, unknown>>,
+      create: createClientThunk as AsyncThunk<Client, unknown, Record<string, unknown>>,
+      update: updateClientThunk as AsyncThunk<unknown, unknown, Record<string, unknown>>,
+      delete: deleteClientThunk as AsyncThunk<string, { id: string }, Record<string, unknown>>,
     },
     createPayloadKey: "client",
     getEntityName: (client) => `${client.firstName} ${client.lastName}`,

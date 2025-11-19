@@ -21,9 +21,8 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
-import { Company } from "@/lib/types";
-import { Client } from "@/lib/types";
 import { ClientsDialog, ClientFormData } from "@/components/molecules/ClientsDialog/ClientsDialog";
+import { Client } from "@/lib/types";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchClients, createClientThunk } from "@/store/thunks/clientsThunks";
 
@@ -168,8 +167,6 @@ export function DealerPaymentDialog({
     }
   };
 
-  const selectedCompany = companies.find((c) => c.id === dealerData.companyId);
-  const selectedClient = clients.find((c) => c.id === dealerData.clientId);
   const filteredClients = dealerData.companyId
     ? clients
     : clients;
