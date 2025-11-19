@@ -3,7 +3,7 @@ const { drizzle } = require("drizzle-orm/better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 const { app } = require("electron");
-const { companies, clients, items, invoices } = require("./schema");
+const { companies, clients, items, invoices, archives } = require("./schema");
 const { migrate } = require("drizzle-orm/better-sqlite3/migrator");
 
 const getDbPath = () => {
@@ -134,12 +134,33 @@ const createTables = () => {
       FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS archives (
+      id TEXT PRIMARY KEY,
+      original_id TEXT NOT NULL,
+      company_id TEXT NOT NULL,
+      client_id TEXT NOT NULL,
+      invoice_number TEXT NOT NULL,
+      invoice_date TEXT NOT NULL,
+      due_date TEXT,
+      items TEXT NOT NULL,
+      subtotal REAL NOT NULL,
+      tax_amount REAL DEFAULT 0,
+      total_amount REAL NOT NULL,
+      status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'sent', 'paid', 'overdue')),
+      notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      archived_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE INDEX IF NOT EXISTS idx_companies_created_at ON companies(created_at);
     CREATE INDEX IF NOT EXISTS idx_clients_created_at ON clients(created_at);
     CREATE INDEX IF NOT EXISTS idx_items_created_at ON items(created_at);
     CREATE INDEX IF NOT EXISTS idx_invoices_company_id ON invoices(company_id);
     CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id);
     CREATE INDEX IF NOT EXISTS idx_invoices_invoice_date ON invoices(invoice_date);
+    CREATE INDEX IF NOT EXISTS idx_archives_original_id ON archives(original_id);
+    CREATE INDEX IF NOT EXISTS idx_archives_archived_at ON archives(archived_at);
   `);
 };
 
@@ -176,5 +197,5 @@ module.exports = {
   getSqliteDatabase,
   closeDatabase,
   getDbPath,
-  schema: { companies, clients, items, invoices },
+  schema: { companies, clients, items, invoices, archives },
 };

@@ -31,6 +31,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
       delete: (id) => ipcRenderer.invoke("db:invoices:delete", id),
       getById: (id) => ipcRenderer.invoke("db:invoices:getById", id),
       getLastByCompanyId: (companyId) => ipcRenderer.invoke("db:invoices:getLastByCompanyId", companyId),
+      archive: (invoiceId) => ipcRenderer.invoke("db:invoices:archive", invoiceId),
+    },
+    archives: {
+      getAll: () => ipcRenderer.invoke("db:archives:getAll"),
+      restore: (archiveId) => ipcRenderer.invoke("db:archives:restore", archiveId),
     },
   },
 });

@@ -3,6 +3,7 @@ const companiesDb = require("../database/companies");
 const clientsDb = require("../database/clients");
 const itemsDb = require("../database/items");
 const invoicesDb = require("../database/invoices");
+const archivesDb = require("../database/archives");
 
 const setupIpcHandlers = (ipcMain) => {
   ipcMain.handle("db:getPath", () => {
@@ -248,6 +249,39 @@ const setupIpcHandlers = (ipcMain) => {
       return { success: true, data: invoice };
     } catch (error) {
       console.error("Error getting last invoice:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:invoices:archive", (_, invoiceId) => {
+    try {
+      const invoice = invoicesDb.getInvoiceById(invoiceId);
+      if (!invoice) {
+        return { success: false, error: "Invoice not found" };
+      }
+      const archived = archivesDb.archiveInvoice(invoice);
+      return { success: true, data: archived };
+    } catch (error) {
+      console.error("Error archiving invoice:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:archives:getAll", () => {
+    try {
+      return { success: true, data: archivesDb.getAllArchives() };
+    } catch (error) {
+      console.error("Error getting archives:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:archives:restore", (_, archiveId) => {
+    try {
+      const invoice = archivesDb.restoreArchive(archiveId);
+      return { success: true, data: invoice };
+    } catch (error) {
+      console.error("Error restoring archive:", error);
       return { success: false, error: error.message };
     }
   });

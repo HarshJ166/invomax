@@ -86,10 +86,30 @@ const invoices = sqliteTable("invoices", {
   updatedAt: text("updated_at"),
 });
 
+const archives = sqliteTable("archives", {
+  id: text("id").primaryKey(),
+  originalId: text("original_id").notNull(),
+  companyId: text("company_id").notNull(),
+  clientId: text("client_id").notNull(),
+  invoiceNumber: text("invoice_number").notNull(),
+  invoiceDate: text("invoice_date").notNull(),
+  dueDate: text("due_date"),
+  items: text("items").notNull(),
+  subtotal: real("subtotal").notNull(),
+  taxAmount: real("tax_amount").default(0),
+  totalAmount: real("total_amount").notNull(),
+  status: text("status", { enum: ["draft", "sent", "paid", "overdue"] }).default("draft"),
+  notes: text("notes"),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
+  archivedAt: text("archived_at").notNull(),
+});
+
 module.exports = {
   companies,
   clients,
   items,
   invoices,
+  archives,
 };
 
