@@ -22,7 +22,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MailIcon, PhoneIcon, CopyIcon } from "lucide-react";
-import { STATE_CITY_MAPPING, INDIAN_STATES } from "@/lib/constants";
+import { INDIAN_STATES } from "@/lib/constants";
+import { formatStateName } from "@/lib/formatters";
+import { useStateCitySelection } from "@/hooks/use-state-city-selection";
 
 export interface ClientFormData {
   customerType: "business" | "individual";
@@ -64,12 +66,6 @@ interface ClientsDialogProps {
   cancelLabel?: string;
 }
 
-const formatStateName = (state: string) =>
-  state
-    .split(" ")
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(" ");
-
 export function ClientsDialog({
   open,
   onOpenChange,
@@ -80,12 +76,12 @@ export function ClientsDialog({
   submitLabel = "Save",
   cancelLabel = "Cancel",
 }: ClientsDialogProps) {
-  const billingCities = clientData.billingState
-    ? STATE_CITY_MAPPING[clientData.billingState] || []
-    : [];
-  const shippingCities = clientData.shippingState
-    ? STATE_CITY_MAPPING[clientData.shippingState] || []
-    : [];
+  const { availableCities: billingCities } = useStateCitySelection({
+    selectedState: clientData.billingState,
+  });
+  const { availableCities: shippingCities } = useStateCitySelection({
+    selectedState: clientData.shippingState,
+  });
 
   const handleFieldChange = <K extends keyof ClientFormData>(
     field: K,

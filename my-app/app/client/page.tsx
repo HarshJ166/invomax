@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { useAppSelector } from "@/store/hooks";
 import { Client } from "@/lib/types";
 import {
   fetchClients,
@@ -24,6 +24,9 @@ import {
   updateClientThunk,
   deleteClientThunk,
 } from "@/store/thunks/clientsThunks";
+import { useCrudPage } from "@/hooks/use-crud-page";
+import { formatStateName } from "@/lib/formatters";
+import { AsyncThunk } from "@reduxjs/toolkit";
 
 const initialClientData: ClientFormData = {
   customerType: "business",
@@ -66,12 +69,6 @@ function ClientDetailsDialog({
   client,
 }: ClientDetailsDialogProps) {
   if (!client) return null;
-
-  const formatStateName = (state: string) =>
-    state
-      .split(" ")
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-      .join(" ");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -291,22 +288,43 @@ function ClientDetailsDialog({
 }
 
 export default function ClientsPage() {
-  const dispatch = useAppDispatch();
   const clients = useAppSelector((state) => state.clients.clients);
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = React.useState(false);
-  const [clientData, setClientData] =
-    React.useState<ClientFormData>(initialClientData);
-  const [editingClientId, setEditingClientId] = React.useState<string | null>(
-    null
-  );
-  const [selectedClient, setSelectedClient] = React.useState<Client | null>(
-    null
-  );
 
-  const handleRefresh = React.useCallback(async () => {
-    await dispatch(fetchClients());
-  }, [dispatch]);
+  const {
+    dialogOpen,
+    detailsDialogOpen,
+    formData: clientData,
+    setFormData: setClientData,
+    selectedEntity: selectedClient,
+    handleRefresh,
+    handleCreate,
+    handleEdit,
+    handleDelete,
+    handleInfo,
+    handleSubmit,
+    handleDialogClose,
+    dialogTitle,
+    submitLabel,
+    setDetailsDialogOpen,
+  } = useCrudPage<Client, ClientFormData>({
+    initialFormData: initialClientData,
+    thunks: {
+      fetch: fetchClients,
+      create: createClientThunk as unknown as AsyncThunk<
+        Client,
+        unknown,
+        Record<string, unknown>
+      >,
+      update: updateClientThunk as unknown as AsyncThunk<
+        unknown,
+        unknown,
+        Record<string, unknown>
+      >,
+      delete: deleteClientThunk,
+    },
+    createPayloadKey: "client",
+    getEntityName: (client) => `${client.firstName} ${client.lastName}`,
+  });
 
   const columns: Column<Client>[] = [
     {
@@ -345,82 +363,16 @@ export default function ClientsPage() {
     },
   ];
 
-  const handleCreate = () => {
-    setClientData(initialClientData);
-    setEditingClientId(null);
-    setDialogOpen(true);
+  const handleEditWrapper = (row: Record<string, unknown>) => {
+    handleEdit(row as unknown as Client);
   };
 
-  const handleEdit = (row: Record<string, unknown>) => {
-    const client = row as Client;
-    setClientData({
-      customerType: client.customerType,
-      salutation: client.salutation,
-      firstName: client.firstName,
-      lastName: client.lastName,
-      panNumber: client.panNumber,
-      companyName: client.companyName,
-      currency: client.currency,
-      gstApplicable: client.gstApplicable,
-      gstin: client.gstin,
-      stateCode: client.stateCode,
-      billingCountry: client.billingCountry,
-      billingState: client.billingState,
-      billingCity: client.billingCity,
-      billingAddressLine1: client.billingAddressLine1,
-      billingAddressLine2: client.billingAddressLine2,
-      billingContactNo: client.billingContactNo,
-      billingEmail: client.billingEmail,
-      billingAlternateContactNo: client.billingAlternateContactNo,
-      shippingCountry: client.shippingCountry,
-      shippingState: client.shippingState,
-      shippingCity: client.shippingCity,
-      shippingAddressLine1: client.shippingAddressLine1,
-      shippingAddressLine2: client.shippingAddressLine2,
-      shippingContactNo: client.shippingContactNo,
-      shippingEmail: client.shippingEmail,
-      shippingAlternateContactNo: client.shippingAlternateContactNo,
-    });
-    setEditingClientId(client.id);
-    setDialogOpen(true);
+  const handleDeleteWrapper = async (row: Record<string, unknown>) => {
+    await handleDelete(row as unknown as Client);
   };
 
-  const handleDelete = async (row: Record<string, unknown>) => {
-    const client = row as Client;
-    const clientName = `${client.firstName} ${client.lastName}`;
-    if (confirm(`Are you sure you want to delete "${clientName}"?`)) {
-      await dispatch(deleteClientThunk({ id: client.id }));
-    }
-  };
-
-  const handleInfo = (row: Record<string, unknown>) => {
-    const client = row as Client;
-    setSelectedClient(client);
-    setDetailsDialogOpen(true);
-  };
-
-  const handleSubmit = async (data: ClientFormData) => {
-    try {
-    if (editingClientId) {
-        await dispatch(updateClientThunk({ id: editingClientId, data }));
-    } else {
-        await dispatch(createClientThunk({ client: data }));
-    }
-    setDialogOpen(false);
-    setClientData(initialClientData);
-    setEditingClientId(null);
-    } catch (error) {
-      console.error("Error saving client:", error);
-      alert("Failed to save client. Please try again.");
-    }
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    if (!open) {
-      setClientData(initialClientData);
-      setEditingClientId(null);
-    }
-    setDialogOpen(open);
+  const handleInfoWrapper = (row: Record<string, unknown>) => {
+    handleInfo(row as unknown as Client);
   };
 
   return (
@@ -432,13 +384,13 @@ export default function ClientsPage() {
         <RefreshButton onRefresh={handleRefresh} />
       </div>
       <DataTable
-        data={clients}
-        columns={columns}
+        data={clients as unknown as Record<string, unknown>[]}
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
         onCreate={handleCreate}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onInfo={handleInfo}
-        getRowId={(row) => (row as Client).id}
+        onEdit={handleEditWrapper}
+        onDelete={handleDeleteWrapper}
+        onInfo={handleInfoWrapper}
+        getRowId={(row) => (row as unknown as Client).id}
         createButtonLabel="Add Client"
         emptyTitle="No clients found"
         emptyDescription="Get started by adding your first client."
@@ -449,8 +401,8 @@ export default function ClientsPage() {
         clientData={clientData}
         onClientDataChange={setClientData}
         onSubmit={handleSubmit}
-        title={editingClientId ? "Edit Client" : "Add Client"}
-        submitLabel={editingClientId ? "Update" : "Save"}
+        title={`${dialogTitle} Client`}
+        submitLabel={submitLabel}
       />
       <ClientDetailsDialog
         open={detailsDialogOpen}

@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { useAppSelector } from "@/store/hooks";
 import { Company } from "@/lib/types";
 import {
   fetchCompanies,
@@ -23,6 +23,7 @@ import {
   updateCompanyThunk,
   deleteCompanyThunk,
 } from "@/store/thunks/companiesThunks";
+import { useCrudPage } from "@/hooks/use-crud-page";
 
 const initialCompanyData: CompanyFormData = {
   companyName: "",
@@ -198,22 +199,35 @@ function CompanyDetailsDialog({
 }
 
 export default function CompaniesPage() {
-  const dispatch = useAppDispatch();
   const companies = useAppSelector((state) => state.companies.companies);
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = React.useState(false);
-  const [companyData, setCompanyData] =
-    React.useState<CompanyFormData>(initialCompanyData);
-  const [editingCompanyId, setEditingCompanyId] = React.useState<string | null>(
-    null
-  );
-  const [selectedCompany, setSelectedCompany] = React.useState<Company | null>(
-    null
-  );
-
-  const handleRefresh = React.useCallback(async () => {
-    await dispatch(fetchCompanies());
-  }, [dispatch]);
+  
+  const {
+    dialogOpen,
+    detailsDialogOpen,
+    formData: companyData,
+    setFormData: setCompanyData,
+    selectedEntity: selectedCompany,
+    handleRefresh,
+    handleCreate,
+    handleEdit,
+    handleDelete,
+    handleInfo,
+    handleSubmit,
+    handleDialogClose,
+    dialogTitle,
+    submitLabel,
+    setDetailsDialogOpen,
+  } = useCrudPage<Company, CompanyFormData>({
+    initialFormData: initialCompanyData,
+    thunks: {
+      fetch: fetchCompanies,
+      create: createCompanyThunk,
+      update: updateCompanyThunk,
+      delete: deleteCompanyThunk,
+    },
+    createPayloadKey: "company",
+    getEntityName: (company) => company.companyName,
+  });
 
   const columns: Column<Company>[] = [
     {
@@ -252,72 +266,16 @@ export default function CompaniesPage() {
     },
   ];
 
-  const handleCreate = () => {
-    setCompanyData(initialCompanyData);
-    setEditingCompanyId(null);
-    setDialogOpen(true);
+  const handleEditWrapper = (row: Record<string, unknown>) => {
+    handleEdit(row as unknown as Company);
   };
 
-  const handleEdit = (row: Record<string, unknown>) => {
-    const company = row as Company;
-    setCompanyData({
-      companyName: company.companyName,
-      proprietor: company.proprietor,
-      address: company.address,
-      email: company.email,
-      phoneNumber: company.phoneNumber,
-      state: company.state,
-      city: company.city,
-      gstNumber: company.gstNumber,
-      invoiceNumberInitial: company.invoiceNumberInitial,
-      logo: company.logo,
-      logoPreview: company.logoPreview,
-      signature: company.signature,
-      signaturePreview: company.signaturePreview,
-      accountNumber: company.accountNumber,
-      bankName: company.bankName,
-      ifscCode: company.ifscCode,
-      branch: company.branch,
-    });
-    setEditingCompanyId(company.id);
-    setDialogOpen(true);
+  const handleDeleteWrapper = async (row: Record<string, unknown>) => {
+    await handleDelete(row as unknown as Company);
   };
 
-  const handleDelete = async (row: Record<string, unknown>) => {
-    const company = row as Company;
-    if (confirm(`Are you sure you want to delete "${company.companyName}"?`)) {
-      await dispatch(deleteCompanyThunk({ id: company.id }));
-    }
-  };
-
-  const handleInfo = (row: Record<string, unknown>) => {
-    const company = row as Company;
-    setSelectedCompany(company);
-    setDetailsDialogOpen(true);
-  };
-
-  const handleSubmit = async (data: CompanyFormData) => {
-    try {
-    if (editingCompanyId) {
-        await dispatch(updateCompanyThunk({ id: editingCompanyId, data }));
-    } else {
-        await dispatch(createCompanyThunk({ company: data }));
-    }
-    setDialogOpen(false);
-    setCompanyData(initialCompanyData);
-    setEditingCompanyId(null);
-    } catch (error) {
-      console.error("Error saving company:", error);
-      alert("Failed to save company. Please try again.");
-    }
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    if (!open) {
-      setCompanyData(initialCompanyData);
-      setEditingCompanyId(null);
-    }
-    setDialogOpen(open);
+  const handleInfoWrapper = (row: Record<string, unknown>) => {
+    handleInfo(row as unknown as Company);
   };
 
   return (
@@ -329,13 +287,13 @@ export default function CompaniesPage() {
         <RefreshButton onRefresh={handleRefresh} />
       </div>
       <DataTable
-        data={companies}
-        columns={columns}
+        data={companies as unknown as Record<string, unknown>[]}
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
         onCreate={handleCreate}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onInfo={handleInfo}
-        getRowId={(row) => (row as Company).id}
+        onEdit={handleEditWrapper}
+        onDelete={handleDeleteWrapper}
+        onInfo={handleInfoWrapper}
+        getRowId={(row) => (row as unknown as Company).id}
         createButtonLabel="Add Company"
         emptyTitle="No companies found"
         emptyDescription="Get started by adding your first company."
@@ -346,8 +304,8 @@ export default function CompaniesPage() {
         companyData={companyData}
         onCompanyDataChange={setCompanyData}
         onSubmit={handleSubmit}
-        title={editingCompanyId ? "Edit Company" : "Add Company"}
-        submitLabel={editingCompanyId ? "Update" : "Save"}
+        title={`${dialogTitle} Company`}
+        submitLabel={submitLabel}
       />
       <CompanyDetailsDialog
         open={detailsDialogOpen}

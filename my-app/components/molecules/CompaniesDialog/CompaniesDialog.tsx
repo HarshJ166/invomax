@@ -21,7 +21,9 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { MailIcon, PhoneIcon, XIcon } from "lucide-react";
-import { STATE_CITY_MAPPING, INDIAN_STATES } from "@/lib/constants";
+import { INDIAN_STATES } from "@/lib/constants";
+import { formatStateName } from "@/lib/formatters";
+import { useStateCitySelection } from "@/hooks/use-state-city-selection";
 
 const FilePreview = ({
   preview,
@@ -86,9 +88,9 @@ export function CompaniesDialog({
   submitLabel = "Save",
   cancelLabel = "Cancel",
 }: CompaniesDialogProps) {
-  const availableCities = companyData.state
-    ? STATE_CITY_MAPPING[companyData.state] || []
-    : [];
+  const { availableCities } = useStateCitySelection({
+    selectedState: companyData.state,
+  });
 
   const handleFieldChange = <K extends keyof CompanyFormData>(
     field: K,
@@ -125,12 +127,6 @@ export function CompaniesDialog({
     e.preventDefault();
     onSubmit(companyData);
   };
-
-  const formatStateName = (state: string) =>
-    state
-      .split(" ")
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-      .join(" ");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

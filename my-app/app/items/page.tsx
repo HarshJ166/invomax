@@ -7,7 +7,7 @@ import {
   ItemFormData,
 } from "@/components/molecules/ItemDialog/ItemDialog";
 import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { useAppSelector } from "@/store/hooks";
 import { Item } from "@/lib/types";
 import {
   fetchItems,
@@ -15,6 +15,7 @@ import {
   updateItemThunk,
   deleteItemThunk,
 } from "@/store/thunks/itemsThunks";
+import { useCrudPage } from "@/hooks/use-crud-page";
 
 const initialItemData: ItemFormData = {
   itemName: "",
@@ -26,15 +27,31 @@ const initialItemData: ItemFormData = {
 };
 
 export default function ItemsPage() {
-  const dispatch = useAppDispatch();
   const items = useAppSelector((state) => state.items.items);
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [itemData, setItemData] = React.useState<ItemFormData>(initialItemData);
-  const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
-
-  const handleRefresh = React.useCallback(async () => {
-    await dispatch(fetchItems());
-  }, [dispatch]);
+  
+  const {
+    dialogOpen,
+    formData: itemData,
+    setFormData: setItemData,
+    handleRefresh,
+    handleCreate,
+    handleEdit,
+    handleDelete,
+    handleSubmit,
+    handleDialogClose,
+    dialogTitle,
+    submitLabel,
+  } = useCrudPage<Item, ItemFormData>({
+    initialFormData: initialItemData,
+    thunks: {
+      fetch: fetchItems,
+      create: createItemThunk,
+      update: updateItemThunk,
+      delete: deleteItemThunk,
+    },
+    createPayloadKey: "item",
+    getEntityName: (item) => item.itemName,
+  });
 
   const columns: Column<Item>[] = [
     {
@@ -76,55 +93,12 @@ export default function ItemsPage() {
     },
   ];
 
-  const handleCreate = () => {
-    setItemData(initialItemData);
-    setEditingItemId(null);
-    setDialogOpen(true);
+  const handleEditWrapper = (row: Record<string, unknown>) => {
+    handleEdit(row as unknown as Item);
   };
 
-  const handleEdit = (row: Record<string, unknown>) => {
-    const item = row as Item;
-    setItemData({
-      itemName: item.itemName,
-      itemDescription: item.itemDescription,
-      hsnCode: item.hsnCode,
-      qtyAvailable: item.qtyAvailable,
-      rate: item.rate,
-      unit: item.unit,
-    });
-    setEditingItemId(item.id);
-    setDialogOpen(true);
-  };
-
-  const handleDelete = async (row: Record<string, unknown>) => {
-    const item = row as Item;
-    if (confirm(`Are you sure you want to delete "${item.itemName}"?`)) {
-      await dispatch(deleteItemThunk({ id: item.id }));
-    }
-  };
-
-  const handleSubmit = async (data: ItemFormData) => {
-    try {
-    if (editingItemId) {
-        await dispatch(updateItemThunk({ id: editingItemId, data }));
-    } else {
-        await dispatch(createItemThunk({ item: data }));
-    }
-    setDialogOpen(false);
-    setItemData(initialItemData);
-    setEditingItemId(null);
-    } catch (error) {
-      console.error("Error saving item:", error);
-      alert("Failed to save item. Please try again.");
-    }
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    if (!open) {
-      setItemData(initialItemData);
-      setEditingItemId(null);
-    }
-    setDialogOpen(open);
+  const handleDeleteWrapper = async (row: Record<string, unknown>) => {
+    await handleDelete(row as unknown as Item);
   };
 
   return (
@@ -134,12 +108,12 @@ export default function ItemsPage() {
         <RefreshButton onRefresh={handleRefresh} />
       </div>
       <DataTable
-        data={items}
-        columns={columns}
+        data={items as unknown as Record<string, unknown>[]}
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
         onCreate={handleCreate}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        getRowId={(row) => (row as Item).id}
+        onEdit={handleEditWrapper}
+        onDelete={handleDeleteWrapper}
+        getRowId={(row) => (row as unknown as Item).id}
         createButtonLabel="Add Item"
         emptyTitle="No items found"
         emptyDescription="Get started by adding your first item."
@@ -150,8 +124,8 @@ export default function ItemsPage() {
         itemData={itemData}
         onItemDataChange={setItemData}
         onSubmit={handleSubmit}
-        title={editingItemId ? "Edit Item" : "Add Item"}
-        submitLabel={editingItemId ? "Update" : "Save"}
+        title={`${dialogTitle} Item`}
+        submitLabel={submitLabel}
       />
     </div>
   );
