@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import companiesReducer from "./slices/companiesSlice";
 import itemsReducer from "./slices/itemsSlice";
 import clientsReducer from "./slices/clientsSlice";
+import dealersReducer from "./slices/dealersSlice";
 import { persistenceMiddleware } from "./middleware/persistence";
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     companies: companiesReducer,
     items: itemsReducer,
     clients: clientsReducer,
+    dealers: dealersReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(persistenceMiddleware),

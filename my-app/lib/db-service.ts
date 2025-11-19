@@ -43,6 +43,20 @@ declare global {
           getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
           restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
         };
+        dealers: {
+          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          getByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          getByCompanyIdAndClientId: (companyId: string, clientId: string) => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          getById: (id: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+          create: (dealer: unknown) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, dealer: unknown) => Promise<{ success: boolean; error?: string }>;
+          delete: (id: string) => Promise<{ success: boolean; error?: string }>;
+          archive: (dealerId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+        };
+        dealerArchives: {
+          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+        };
       };
     };
   }
@@ -94,6 +108,20 @@ interface DbService {
     archive: (invoiceId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
   };
   archives: {
+    getAll: () => Promise<unknown[]>;
+    restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+  };
+  dealers: {
+    getAll: () => Promise<unknown[]>;
+    getByCompanyId: (companyId: string) => Promise<unknown[]>;
+    getByCompanyIdAndClientId: (companyId: string, clientId: string) => Promise<unknown[]>;
+    getById: (id: string) => Promise<{ success: boolean; data?: unknown }>;
+    create: (dealer: unknown) => Promise<{ success: boolean }>;
+    update: (id: string, dealer: unknown) => Promise<{ success: boolean }>;
+    delete: (id: string) => Promise<{ success: boolean }>;
+    archive: (dealerId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+  };
+  dealerArchives: {
     getAll: () => Promise<unknown[]>;
     restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
   };
@@ -482,6 +510,114 @@ export const dbService: DbService = {
         return await api.db.archives.restore(archiveId);
       } catch (error) {
         console.error("Error restoring archive:", error);
+        return { success: false };
+      }
+    },
+  },
+  dealers: {
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.dealers.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting dealers:", error);
+        return [];
+      }
+    },
+    getByCompanyId: async (companyId: string) => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.dealers.getByCompanyId(companyId);
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting dealers by company:", error);
+        return [];
+      }
+    },
+    getByCompanyIdAndClientId: async (companyId: string, clientId: string) => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.dealers.getByCompanyIdAndClientId(companyId, clientId);
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting dealers by company and client:", error);
+        return [];
+      }
+    },
+    getById: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.dealers.getById(id);
+      } catch (error) {
+        console.error("Error getting dealer:", error);
+        return { success: false };
+      }
+    },
+    create: async (dealer: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.dealers.create(dealer);
+      } catch (error) {
+        console.error("Error creating dealer:", error);
+        return { success: false };
+      }
+    },
+    update: async (id: string, dealer: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.dealers.update(id, dealer);
+      } catch (error) {
+        console.error("Error updating dealer:", error);
+        return { success: false };
+      }
+    },
+    delete: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.dealers.delete(id);
+      } catch (error) {
+        console.error("Error deleting dealer:", error);
+        return { success: false };
+      }
+    },
+    archive: async (dealerId: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.dealers.archive(dealerId);
+      } catch (error) {
+        console.error("Error archiving dealer:", error);
+        return { success: false };
+      }
+    },
+  },
+  dealerArchives: {
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.dealerArchives.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting dealer archives:", error);
+        return [];
+      }
+    },
+    restore: async (archiveId: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.dealerArchives.restore(archiveId);
+      } catch (error) {
+        console.error("Error restoring dealer archive:", error);
         return { success: false };
       }
     },

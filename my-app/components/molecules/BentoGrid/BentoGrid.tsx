@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Company, Item } from "@/lib/types";
+import { Company, Item, DealerPayment } from "@/lib/types";
 
 interface Invoice {
   id: string;
@@ -26,6 +26,7 @@ interface BentoGridProps {
   companies: Company[];
   items: Item[];
   invoices?: Invoice[];
+  dealerPayments?: DealerPayment[];
   className?: string;
 }
 
@@ -38,6 +39,7 @@ interface DashboardStats {
 const calculateStats = (
   companies: Company[],
   invoices: Invoice[] = [],
+  dealerPayments: DealerPayment[] = [],
   selectedCompanyId?: string
 ): DashboardStats => {
   const filteredInvoices = selectedCompanyId
@@ -51,10 +53,18 @@ const calculateStats = (
 
   const invoiceCount = invoices.length;
 
-  const totalDebt = companies.reduce(
-    (sum, company) => sum + (company.debt || 0),
-    0
-  );
+  const filteredDealerPayments = selectedCompanyId
+    ? dealerPayments.filter((payment) => payment.companyId === selectedCompanyId)
+    : dealerPayments;
+
+  const totalDebt = filteredDealerPayments.reduce((sum, payment) => {
+    if (payment.paymentStatus === "unpaid") {
+      return sum + (payment.billAmountTotal || 0);
+    } else if (payment.paymentStatus === "partial_paid") {
+      return sum + (payment.balanceAmount || 0);
+    }
+    return sum;
+  }, 0);
 
   return {
     totalAmount,
@@ -73,6 +83,7 @@ export function BentoGrid({
   companies,
   items,
   invoices = [],
+  dealerPayments = [],
   className,
 }: BentoGridProps) {
   const router = useRouter();
@@ -84,9 +95,10 @@ export function BentoGrid({
       calculateStats(
         companies,
         invoices,
+        dealerPayments,
         selectedCompanyId === "all" ? undefined : selectedCompanyId
       ),
-    [companies, invoices, selectedCompanyId]
+    [companies, invoices, dealerPayments, selectedCompanyId]
   );
 
   const randomItems = React.useMemo(() => getRandomItems(items, 3), [items]);
@@ -161,7 +173,11 @@ export function BentoGrid({
 
         <StatsCard
           title="Total Debt"
-          description="Outstanding amount to be received"
+          description={
+            selectedCompanyId === "all"
+              ? "Outstanding amount to be paid to dealers/clients"
+              : `Outstanding amount to be paid to dealers/clients for ${selectedCompany?.companyName || ""}`
+          }
           value={`₹${stats.totalDebt.toLocaleString("en-IN", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,

@@ -4,6 +4,8 @@ const clientsDb = require("../database/clients");
 const itemsDb = require("../database/items");
 const invoicesDb = require("../database/invoices");
 const archivesDb = require("../database/archives");
+const dealersDb = require("../database/dealers");
+const dealerArchivesDb = require("../database/dealerArchives");
 
 const setupIpcHandlers = (ipcMain) => {
   ipcMain.handle("db:getPath", () => {
@@ -345,6 +347,106 @@ const setupIpcHandlers = (ipcMain) => {
       return { success: true, data: invoice };
     } catch (error) {
       console.error("Error restoring archive:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:getAll", () => {
+    try {
+      return { success: true, data: dealersDb.getAllDealers() };
+    } catch (error) {
+      console.error("Error getting dealers:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:getByCompanyId", (_, companyId) => {
+    try {
+      return { success: true, data: dealersDb.getDealersByCompanyId(companyId) };
+    } catch (error) {
+      console.error("Error getting dealers by company:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:getByCompanyIdAndClientId", (_, companyId, clientId) => {
+    try {
+      return { success: true, data: dealersDb.getDealersByCompanyIdAndClientId(companyId, clientId) };
+    } catch (error) {
+      console.error("Error getting dealers by company and client:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:getById", (_, id) => {
+    try {
+      const dealer = dealersDb.getDealerById(id);
+      return { success: true, data: dealer };
+    } catch (error) {
+      console.error("Error getting dealer:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:create", (_, dealer) => {
+    try {
+      dealersDb.createDealer(dealer);
+      return { success: true };
+    } catch (error) {
+      console.error("Error creating dealer:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:update", (_, id, dealer) => {
+    try {
+      dealersDb.updateDealer(id, dealer);
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating dealer:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:delete", (_, id) => {
+    try {
+      dealersDb.deleteDealer(id);
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting dealer:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealers:archive", (_, dealerId) => {
+    try {
+      const dealer = dealersDb.getDealerById(dealerId);
+      if (!dealer) {
+        return { success: false, error: "Dealer payment not found" };
+      }
+      const archived = dealerArchivesDb.archiveDealer(dealer);
+      return { success: true, data: archived };
+    } catch (error) {
+      console.error("Error archiving dealer:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealerArchives:getAll", () => {
+    try {
+      return { success: true, data: dealerArchivesDb.getAllDealerArchives() };
+    } catch (error) {
+      console.error("Error getting dealer archives:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:dealerArchives:restore", (_, archiveId) => {
+    try {
+      const dealer = dealerArchivesDb.restoreDealerArchive(archiveId);
+      return { success: true, data: dealer };
+    } catch (error) {
+      console.error("Error restoring dealer archive:", error);
       return { success: false, error: error.message };
     }
   });

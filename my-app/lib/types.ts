@@ -35,3 +35,20 @@ export interface Invoice {
   updatedAt: string;
 }
 
+export interface DealerPayment {
+  id: string;
+  companyId: string;
+  clientId: string;
+  billNumber: string;
+  billDate: string;
+  billAmountTotal: number;
+  paymentMode: "cash" | "neft" | "imps" | "upi";
+  referenceNumber: string | null;
+  paymentStatus: "paid" | "unpaid" | "partial_paid";
+  paidAmount: number;
+  balanceAmount: number;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

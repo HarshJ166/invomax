@@ -105,11 +105,49 @@ const archives = sqliteTable("archives", {
   archivedAt: text("archived_at").notNull(),
 });
 
+const dealers = sqliteTable("dealers", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  clientId: text("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  billNumber: text("bill_number").notNull(),
+  billDate: text("bill_date").notNull(),
+  billAmountTotal: real("bill_amount_total").notNull(),
+  paymentMode: text("payment_mode", { enum: ["cash", "neft", "imps", "upi"] }).notNull(),
+  referenceNumber: text("reference_number"),
+  paymentStatus: text("payment_status", { enum: ["paid", "unpaid", "partial_paid"] }).notNull(),
+  paidAmount: real("paid_amount").default(0),
+  balanceAmount: real("balance_amount").default(0),
+  description: text("description"),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
+});
+
+const dealerArchives = sqliteTable("dealer_archives", {
+  id: text("id").primaryKey(),
+  originalId: text("original_id").notNull(),
+  companyId: text("company_id").notNull(),
+  clientId: text("client_id").notNull(),
+  billNumber: text("bill_number").notNull(),
+  billDate: text("bill_date").notNull(),
+  billAmountTotal: real("bill_amount_total").notNull(),
+  paymentMode: text("payment_mode", { enum: ["cash", "neft", "imps", "upi"] }).notNull(),
+  referenceNumber: text("reference_number"),
+  paymentStatus: text("payment_status", { enum: ["paid", "unpaid", "partial_paid"] }).notNull(),
+  paidAmount: real("paid_amount").default(0),
+  balanceAmount: real("balance_amount").default(0),
+  description: text("description"),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
+  archivedAt: text("archived_at").notNull(),
+});
+
 module.exports = {
   companies,
   clients,
   items,
   invoices,
   archives,
+  dealers,
+  dealerArchives,
 };
 

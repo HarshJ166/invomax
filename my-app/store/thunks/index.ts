@@ -35,3 +35,17 @@ export {
   restoreArchiveThunk,
 } from "./archivesThunks";
 
+export {
+  fetchDealers,
+  fetchDealersByCompanyId,
+  fetchDealersByCompanyIdAndClientId,
+  createDealerThunk,
+  updateDealerThunk,
+  deleteDealerThunk,
+} from "./dealersThunks";
+
+export {
+  fetchDealerArchives,
+  restoreDealerArchiveThunk,
+} from "./dealerArchivesThunks";
+

@@ -11,6 +11,7 @@ import {
   Package,
   Receipt,
   Trash2,
+  CreditCard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -66,6 +67,11 @@ const navigationItems: NavItem[] = [
     title: "Items",
     href: "/items",
     icon: Package,
+  },
+  {
+    title: "Dealer Payment",
+    href: "/dealer-payment",
+    icon: CreditCard,
   },
   {
     title: "Recycle Bin",

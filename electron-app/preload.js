@@ -43,6 +43,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
       getAll: () => ipcRenderer.invoke("db:archives:getAll"),
       restore: (archiveId) => ipcRenderer.invoke("db:archives:restore", archiveId),
     },
+    dealers: {
+      getAll: () => ipcRenderer.invoke("db:dealers:getAll"),
+      getByCompanyId: (companyId) => ipcRenderer.invoke("db:dealers:getByCompanyId", companyId),
+      getByCompanyIdAndClientId: (companyId, clientId) => ipcRenderer.invoke("db:dealers:getByCompanyIdAndClientId", companyId, clientId),
+      getById: (id) => ipcRenderer.invoke("db:dealers:getById", id),
+      create: (dealer) => ipcRenderer.invoke("db:dealers:create", dealer),
+      update: (id, dealer) => ipcRenderer.invoke("db:dealers:update", id, dealer),
+      delete: (id) => ipcRenderer.invoke("db:dealers:delete", id),
+      archive: (dealerId) => ipcRenderer.invoke("db:dealers:archive", dealerId),
+    },
+    dealerArchives: {
+      getAll: () => ipcRenderer.invoke("db:dealerArchives:getAll"),
+      restore: (archiveId) => ipcRenderer.invoke("db:dealerArchives:restore", archiveId),
+    },
   },
 });
 
