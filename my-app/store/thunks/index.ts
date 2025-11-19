@@ -27,5 +27,11 @@ export {
   deleteInvoiceThunk,
   getInvoiceByIdThunk,
   getLastInvoiceByCompanyIdThunk,
+  archiveInvoiceThunk,
 } from "./invoicesThunks";
+
+export {
+  fetchArchives,
+  restoreArchiveThunk,
+} from "./archivesThunks";
 

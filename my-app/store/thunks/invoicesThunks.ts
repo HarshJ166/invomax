@@ -180,3 +180,25 @@ export const getLastInvoiceByCompanyIdThunk = createAsyncThunk(
   }
 );
 
+interface ArchiveInvoicePayload {
+  invoiceId: string;
+}
+
+export const archiveInvoiceThunk = createAsyncThunk(
+  "invoices/archiveInvoice",
+  async (payload: ArchiveInvoicePayload, { rejectWithValue }) => {
+    try {
+      const result = await dbService.invoices.archive(payload.invoiceId);
+      
+      if (!result.success) {
+        return rejectWithValue(result.error || "Failed to archive invoice");
+      }
+
+      return payload.invoiceId;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to archive invoice";
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+

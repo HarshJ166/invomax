@@ -10,6 +10,7 @@ import {
   Building2,
   Package,
   Receipt,
+  Trash2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,11 @@ const navigationItems: NavItem[] = [
     title: "Items",
     href: "/items",
     icon: Package,
+  },
+  {
+    title: "Recycle Bin",
+    href: "/recycle-bin",
+    icon: Trash2,
   },
 ];
 

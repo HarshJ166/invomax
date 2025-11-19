@@ -15,6 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { DownloadIcon, EditIcon, TrashIcon } from "lucide-react";
+import { renderToStaticMarkup } from "react-dom/server";
+import InvoicePDF from "@/components/pdf/InvoicePDF";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { archiveInvoiceThunk } from "@/store/thunks/invoicesThunks";
+import { useRouter } from "next/navigation";
 
 interface InvoiceWithDetails extends Invoice {
   companyName: string;
@@ -23,6 +30,7 @@ interface InvoiceWithDetails extends Invoice {
 
 export default function InvoiceListPage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const companies = useAppSelector((state) => state.companies.companies);
   const clients = useAppSelector((state) => state.clients.clients);
   const [invoicesWithDetails, setInvoicesWithDetails] = React.useState<InvoiceWithDetails[]>([]);
@@ -110,6 +118,78 @@ export default function InvoiceListPage() {
     return status === "paid" ? "paid" : "unpaid";
   };
 
+  const generatePDF = async (invoice: Invoice, company: Company, client: Client): Promise<Blob> => {
+    const html = renderToStaticMarkup(
+      <InvoicePDF invoice={invoice} company={company} client={client} />
+    );
+
+    const response = await fetch("/api/generate-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ html }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to generate PDF");
+    }
+
+    return await response.blob();
+  };
+
+  const downloadPDF = async (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadInvoice = async (invoice: InvoiceWithDetails) => {
+    try {
+      const company = companies.find((c) => c.id === invoice.companyId);
+      const client = clients.find((c) => c.id === invoice.clientId);
+
+      if (!company || !client) {
+        alert("Company or client information not found for this invoice.");
+        return;
+      }
+
+      const blob = await generatePDF(invoice, company, client);
+      await downloadPDF(blob, `invoice_${invoice.invoiceNumber}.pdf`);
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
+  };
+
+  const handleEditInvoice = (invoice: InvoiceWithDetails) => {
+    router.push(`/invoice?edit=${invoice.id}`);
+  };
+
+  const handleDeleteInvoice = async (invoice: InvoiceWithDetails) => {
+    if (!confirm(`Are you sure you want to delete invoice ${invoice.invoiceNumber}?`)) {
+      return;
+    }
+
+    try {
+      const result = await dispatch(archiveInvoiceThunk({ invoiceId: invoice.id }));
+      if (archiveInvoiceThunk.fulfilled.match(result)) {
+        await loadData();
+        alert("Invoice deleted successfully.");
+      } else {
+        alert("Failed to delete invoice. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      alert("Failed to delete invoice. Please try again.");
+    }
+  };
+
   const columns: Column<InvoiceWithDetails>[] = [
     {
       header: "Company Name",
@@ -181,6 +261,54 @@ export default function InvoiceListPage() {
               </SelectItem>
             </SelectContent>
           </Select>
+        );
+      },
+    },
+    {
+      header: "Actions",
+      accessor: (row) => {
+        return (
+          <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDownloadInvoice(row)}
+                >
+                  <DownloadIcon className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Download PDF</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEditInvoice(row)}
+                >
+                  <EditIcon className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit Invoice</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteInvoice(row)}
+                >
+                  <TrashIcon className="size-4 text-destructive" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete Invoice</TooltipContent>
+            </Tooltip>
+          </div>
         );
       },
     },

@@ -31,6 +31,11 @@ declare global {
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
           getById: (id: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
           getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+          archive: (invoiceId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+        };
+        archives: {
+          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
         };
       };
     };
@@ -74,6 +79,11 @@ interface DbService {
     delete: (id: string) => Promise<{ success: boolean }>;
     getById: (id: string) => Promise<{ success: boolean; data?: unknown }>;
     getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown }>;
+    archive: (invoiceId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+  };
+  archives: {
+    getAll: () => Promise<unknown[]>;
+    restore: (archiveId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
   };
 }
 
@@ -352,6 +362,39 @@ export const dbService: DbService = {
         return await api.db.invoices.getLastByCompanyId(companyId);
       } catch (error) {
         console.error("Error getting last invoice:", error);
+        return { success: false };
+      }
+    },
+    archive: async (invoiceId: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.invoices.archive(invoiceId);
+      } catch (error) {
+        console.error("Error archiving invoice:", error);
+        return { success: false };
+      }
+    },
+  },
+  archives: {
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.archives.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting archives:", error);
+        return [];
+      }
+    },
+    restore: async (archiveId: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.archives.restore(archiveId);
+      } catch (error) {
+        console.error("Error restoring archive:", error);
         return { success: false };
       }
     },
