@@ -9,7 +9,7 @@ const companies = sqliteTable("companies", {
   phoneNumber: text("phone_number").notNull(),
   state: text("state").notNull(),
   city: text("city").notNull(),
-  gstNumber: text("gst_number").notNull(),
+  gstNumber: text("gst_number"),
   invoiceNumberInitial: text("invoice_number_initial").notNull(),
   logo: text("logo"),
   signature: text("signature"),

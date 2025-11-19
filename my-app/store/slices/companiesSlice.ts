@@ -10,13 +10,28 @@ const initialState: CompaniesState = {
   companies: [],
 };
 
+const stripFileObjects = (data: CompanyFormData): Omit<CompanyFormData, "logo" | "signature"> & {
+  logoPreview: string;
+  signaturePreview: string;
+} => {
+  const { logo, signature, ...rest } = data;
+  return {
+    ...rest,
+    logoPreview: data.logoPreview || "",
+    signaturePreview: data.signaturePreview || "",
+  };
+};
+
 const companiesSlice = createSlice({
   name: "companies",
   initialState,
   reducers: {
     addCompany: (state, action: PayloadAction<CompanyFormData>) => {
+      const serializableData = stripFileObjects(action.payload);
       const newCompany: Company = {
-        ...action.payload,
+        ...serializableData,
+        logo: null,
+        signature: null,
         id: `company-${Date.now()}`,
         revenueTotal: 0,
         debt: 0,
@@ -32,9 +47,12 @@ const companiesSlice = createSlice({
         (company) => company.id === action.payload.id
       );
       if (index !== -1) {
+        const serializableData = stripFileObjects(action.payload.data);
         state.companies[index] = {
           ...state.companies[index],
-          ...action.payload.data,
+          ...serializableData,
+          logo: null,
+          signature: null,
         };
       }
     },
@@ -44,7 +62,11 @@ const companiesSlice = createSlice({
       );
     },
     setCompanies: (state, action: PayloadAction<Company[]>) => {
-      state.companies = action.payload;
+      state.companies = action.payload.map((company) => ({
+        ...company,
+        logo: null,
+        signature: null,
+      }));
     },
   },
 });

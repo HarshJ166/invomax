@@ -24,6 +24,14 @@ declare global {
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
           setAll: (items: unknown[]) => Promise<{ success: boolean; error?: string }>;
         };
+        invoices: {
+          getAll: () => Promise<{ success: boolean; data?: unknown[]; error?: string }>;
+          create: (invoice: unknown) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, invoice: unknown) => Promise<{ success: boolean; error?: string }>;
+          delete: (id: string) => Promise<{ success: boolean; error?: string }>;
+          getById: (id: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+          getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown; error?: string }>;
+        };
       };
     };
   }
@@ -58,6 +66,14 @@ interface DbService {
     update: (id: string, item: unknown) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
     setAll: (items: unknown[]) => Promise<{ success: boolean }>;
+  };
+  invoices: {
+    getAll: () => Promise<unknown[]>;
+    create: (invoice: unknown) => Promise<{ success: boolean }>;
+    update: (id: string, invoice: unknown) => Promise<{ success: boolean }>;
+    delete: (id: string) => Promise<{ success: boolean }>;
+    getById: (id: string) => Promise<{ success: boolean; data?: unknown }>;
+    getLastByCompanyId: (companyId: string) => Promise<{ success: boolean; data?: unknown }>;
   };
 }
 
@@ -227,6 +243,69 @@ export const dbService: DbService = {
         return await api.db.items.setAll(items);
       } catch (error) {
         console.error("Error setting items:", error);
+        return { success: false };
+      }
+    },
+  },
+  invoices: {
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.invoices.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting invoices:", error);
+        return [];
+      }
+    },
+    create: async (invoice: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.invoices.create(invoice);
+      } catch (error) {
+        console.error("Error creating invoice:", error);
+        return { success: false };
+      }
+    },
+    update: async (id: string, invoice: unknown) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.invoices.update(id, invoice);
+      } catch (error) {
+        console.error("Error updating invoice:", error);
+        return { success: false };
+      }
+    },
+    delete: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.invoices.delete(id);
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+        return { success: false };
+      }
+    },
+    getById: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.invoices.getById(id);
+      } catch (error) {
+        console.error("Error getting invoice:", error);
+        return { success: false };
+      }
+    },
+    getLastByCompanyId: async (companyId: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.invoices.getLastByCompanyId(companyId);
+      } catch (error) {
+        console.error("Error getting last invoice:", error);
         return { success: false };
       }
     },

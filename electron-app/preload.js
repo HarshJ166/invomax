@@ -24,6 +24,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
       delete: (id) => ipcRenderer.invoke("db:items:delete", id),
       setAll: (items) => ipcRenderer.invoke("db:items:setAll", items),
     },
+    invoices: {
+      getAll: () => ipcRenderer.invoke("db:invoices:getAll"),
+      create: (invoice) => ipcRenderer.invoke("db:invoices:create", invoice),
+      update: (id, invoice) => ipcRenderer.invoke("db:invoices:update", id, invoice),
+      delete: (id) => ipcRenderer.invoke("db:invoices:delete", id),
+      getById: (id) => ipcRenderer.invoke("db:invoices:getById", id),
+      getLastByCompanyId: (companyId) => ipcRenderer.invoke("db:invoices:getLastByCompanyId", companyId),
+    },
   },
 });
 

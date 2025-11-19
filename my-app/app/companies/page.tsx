@@ -287,10 +287,31 @@ export default function CompaniesPage() {
   };
 
   const handleSubmit = (data: CompanyFormData) => {
+    const serializableData: Omit<CompanyFormData, "logo" | "signature"> & {
+      logoPreview: string;
+      signaturePreview: string;
+    } = {
+      companyName: data.companyName,
+      proprietor: data.proprietor,
+      address: data.address,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      state: data.state,
+      city: data.city,
+      gstNumber: data.gstNumber,
+      invoiceNumberInitial: data.invoiceNumberInitial,
+      logoPreview: data.logoPreview,
+      signaturePreview: data.signaturePreview,
+      accountNumber: data.accountNumber,
+      bankName: data.bankName,
+      ifscCode: data.ifscCode,
+      branch: data.branch,
+    };
+    
     if (editingCompanyId) {
-      dispatch(updateCompany({ id: editingCompanyId, data }));
+      dispatch(updateCompany({ id: editingCompanyId, data: serializableData }));
     } else {
-      dispatch(addCompany(data));
+      dispatch(addCompany(serializableData));
     }
     setDialogOpen(false);
     setCompanyData(initialCompanyData);

@@ -269,17 +269,14 @@ export function CompaniesDialog({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="gstNumber">
-                  GST Number <span className="text-destructive">*</span>
-                </Label>
+                <Label htmlFor="gstNumber">GST Number</Label>
                 <Input
                   id="gstNumber"
                   value={companyData.gstNumber}
                   onChange={(e) =>
                     handleFieldChange("gstNumber", e.target.value)
                   }
-                  placeholder="Enter GST number"
-                  required
+                  placeholder="Enter GST number (optional)"
                 />
               </div>
               <div className="grid gap-2">

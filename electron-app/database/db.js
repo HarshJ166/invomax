@@ -55,7 +55,7 @@ const createTables = () => {
       phone_number TEXT NOT NULL,
       state TEXT NOT NULL,
       city TEXT NOT NULL,
-      gst_number TEXT NOT NULL,
+      gst_number TEXT,
       invoice_number_initial TEXT NOT NULL,
       logo TEXT,
       signature TEXT,

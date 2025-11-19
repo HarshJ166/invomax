@@ -2,6 +2,7 @@ const { getDbPath } = require("../database/db");
 const companiesDb = require("../database/companies");
 const clientsDb = require("../database/clients");
 const itemsDb = require("../database/items");
+const invoicesDb = require("../database/invoices");
 
 const setupIpcHandlers = (ipcMain) => {
   ipcMain.handle("db:getPath", () => {
@@ -151,6 +152,65 @@ const setupIpcHandlers = (ipcMain) => {
       return { success: true };
     } catch (error) {
       console.error("Error setting items:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:invoices:getAll", () => {
+    try {
+      return { success: true, data: invoicesDb.getAllInvoices() };
+    } catch (error) {
+      console.error("Error getting invoices:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:invoices:create", (_, invoice) => {
+    try {
+      invoicesDb.createInvoice(invoice);
+      return { success: true };
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:invoices:update", (_, id, invoice) => {
+    try {
+      invoicesDb.updateInvoice(id, invoice);
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:invoices:delete", (_, id) => {
+    try {
+      invoicesDb.deleteInvoice(id);
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:invoices:getById", (_, id) => {
+    try {
+      const invoice = invoicesDb.getInvoiceById(id);
+      return { success: true, data: invoice };
+    } catch (error) {
+      console.error("Error getting invoice:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db:invoices:getLastByCompanyId", (_, companyId) => {
+    try {
+      const invoice = invoicesDb.getLastInvoiceByCompanyId(companyId);
+      return { success: true, data: invoice };
+    } catch (error) {
+      console.error("Error getting last invoice:", error);
       return { success: false, error: error.message };
     }
   });
