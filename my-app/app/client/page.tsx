@@ -6,6 +6,7 @@ import {
   ClientsDialog,
   ClientFormData,
 } from "@/components/molecules/ClientsDialog/ClientsDialog";
+import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
 import {
   Dialog,
   DialogContent,
@@ -16,8 +17,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { addClient, updateClient, deleteClient } from "@/store/slices/clientsSlice";
 import { Client } from "@/lib/types";
+import {
+  fetchClients,
+  createClientThunk,
+  updateClientThunk,
+  deleteClientThunk,
+} from "@/store/thunks/clientsThunks";
 
 const initialClientData: ClientFormData = {
   customerType: "business",
@@ -298,6 +304,10 @@ export default function ClientsPage() {
     null
   );
 
+  const handleRefresh = React.useCallback(async () => {
+    await dispatch(fetchClients());
+  }, [dispatch]);
+
   const columns: Column<Client>[] = [
     {
       header: "Client Name",
@@ -375,11 +385,11 @@ export default function ClientsPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = (row: Record<string, unknown>) => {
+  const handleDelete = async (row: Record<string, unknown>) => {
     const client = row as Client;
     const clientName = `${client.firstName} ${client.lastName}`;
     if (confirm(`Are you sure you want to delete "${clientName}"?`)) {
-      dispatch(deleteClient(client.id));
+      await dispatch(deleteClientThunk({ id: client.id }));
     }
   };
 
@@ -389,15 +399,20 @@ export default function ClientsPage() {
     setDetailsDialogOpen(true);
   };
 
-  const handleSubmit = (data: ClientFormData) => {
+  const handleSubmit = async (data: ClientFormData) => {
+    try {
     if (editingClientId) {
-      dispatch(updateClient({ id: editingClientId, data }));
+        await dispatch(updateClientThunk({ id: editingClientId, data }));
     } else {
-      dispatch(addClient(data));
+        await dispatch(createClientThunk({ client: data }));
     }
     setDialogOpen(false);
     setClientData(initialClientData);
     setEditingClientId(null);
+    } catch (error) {
+      console.error("Error saving client:", error);
+      alert("Failed to save client. Please try again.");
+    }
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -410,10 +425,11 @@ export default function ClientsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
+      <div className="mb-6 flex items-start justify-between">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           Clients
         </h1>
+        <RefreshButton onRefresh={handleRefresh} />
       </div>
       <DataTable
         data={clients}

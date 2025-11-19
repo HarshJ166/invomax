@@ -14,6 +14,5 @@ export const store = configureStore({
     getDefaultMiddleware().concat(persistenceMiddleware),
 });
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export type { RootState, AppDispatch } from "./types";
 

@@ -10,12 +10,27 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatsCard } from "@/components/molecules/StatsCard/StatsCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Company, Item } from "@/lib/types";
+
+interface Invoice {
+  id: string;
+  companyId: string;
+  totalAmount: number;
+  status: string;
+}
 
 interface BentoGridProps {
   companies: Company[];
   items: Item[];
+  invoices?: Invoice[];
   className?: string;
 }
 
@@ -25,15 +40,32 @@ interface DashboardStats {
   totalDebt: number;
 }
 
-const calculateStats = (companies: Company[]): DashboardStats => {
-  return companies.reduce(
-    (acc, company) => ({
-      totalAmount: acc.totalAmount + (company.revenueTotal || 0),
-      invoiceCount: acc.invoiceCount + (company.invoiceCount || 0),
-      totalDebt: acc.totalDebt + (company.debt || 0),
-    }),
-    { totalAmount: 0, invoiceCount: 0, totalDebt: 0 }
+const calculateStats = (
+  companies: Company[],
+  invoices: Invoice[] = [],
+  selectedCompanyId?: string
+): DashboardStats => {
+  const filteredInvoices = selectedCompanyId
+    ? invoices.filter((invoice) => invoice.companyId === selectedCompanyId)
+    : invoices;
+
+  const totalAmount = filteredInvoices.reduce(
+    (sum, invoice) => sum + (invoice.totalAmount || 0),
+    0
   );
+
+  const invoiceCount = invoices.length;
+
+  const totalDebt = companies.reduce(
+    (sum, company) => sum + (company.debt || 0),
+    0
+  );
+
+  return {
+    totalAmount,
+    invoiceCount,
+    totalDebt,
+  };
 };
 
 const getRandomItems = (items: Item[], count: number): Item[] => {
@@ -45,14 +77,26 @@ const getRandomItems = (items: Item[], count: number): Item[] => {
 export function BentoGrid({
   companies,
   items,
+  invoices = [],
   className,
 }: BentoGridProps) {
   const router = useRouter();
-  const stats = React.useMemo(() => calculateStats(companies), [companies]);
+  const [selectedCompanyId, setSelectedCompanyId] = React.useState<string>("all");
+
+  const stats = React.useMemo(
+    () => calculateStats(companies, invoices, selectedCompanyId === "all" ? undefined : selectedCompanyId),
+    [companies, invoices, selectedCompanyId]
+  );
+
   const randomItems = React.useMemo(
     () => getRandomItems(items, 3),
     [items]
   );
+
+  const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
+  const descriptionText = selectedCompany
+    ? `Total revenue from ${selectedCompany.companyName}`
+    : "Total revenue from all invoices";
 
   const handleCreateInvoice = () => {
     router.push("/invoice");
@@ -70,16 +114,39 @@ export function BentoGrid({
     <div className={cn("w-full", className)}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-2">
-          <StatsCard
-            title="Total Invoice Amount"
-            description="Total revenue from all invoices"
-            value={`₹${stats.totalAmount.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`}
-            className="h-full"
-            valueClassName="text-3xl"
-          />
+          <Card className="h-full bg-white dark:bg-gray-50 border-gray-200">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="text-base font-bold text-black dark:text-black">
+                  Total Invoice Amount
+                </CardTitle>
+                <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+                  <SelectTrigger className="w-[200px] h-8 text-sm">
+                    <SelectValue placeholder="Select company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Companies</SelectItem>
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.companyName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-700 mt-1">
+                {descriptionText}
+              </p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-3xl font-semibold text-black dark:text-black">
+                ₹{stats.totalAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <StatsCard

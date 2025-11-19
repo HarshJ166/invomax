@@ -6,6 +6,7 @@ import {
   CompaniesDialog,
   CompanyFormData,
 } from "@/components/molecules/CompaniesDialog/CompaniesDialog";
+import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { addCompany, updateCompany, deleteCompany } from "@/store/slices/companiesSlice";
 import { Company } from "@/lib/types";
+import {
+  fetchCompanies,
+  createCompanyThunk,
+  updateCompanyThunk,
+  deleteCompanyThunk,
+} from "@/store/thunks/companiesThunks";
 
 const initialCompanyData: CompanyFormData = {
   companyName: "",
@@ -205,6 +211,10 @@ export default function CompaniesPage() {
     null
   );
 
+  const handleRefresh = React.useCallback(async () => {
+    await dispatch(fetchCompanies());
+  }, [dispatch]);
+
   const columns: Column<Company>[] = [
     {
       header: "Company Name",
@@ -273,10 +283,10 @@ export default function CompaniesPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = (row: Record<string, unknown>) => {
+  const handleDelete = async (row: Record<string, unknown>) => {
     const company = row as Company;
     if (confirm(`Are you sure you want to delete "${company.companyName}"?`)) {
-      dispatch(deleteCompany(company.id));
+      await dispatch(deleteCompanyThunk({ id: company.id }));
     }
   };
 
@@ -286,36 +296,20 @@ export default function CompaniesPage() {
     setDetailsDialogOpen(true);
   };
 
-  const handleSubmit = (data: CompanyFormData) => {
-    const serializableData: Omit<CompanyFormData, "logo" | "signature"> & {
-      logoPreview: string;
-      signaturePreview: string;
-    } = {
-      companyName: data.companyName,
-      proprietor: data.proprietor,
-      address: data.address,
-      email: data.email,
-      phoneNumber: data.phoneNumber,
-      state: data.state,
-      city: data.city,
-      gstNumber: data.gstNumber,
-      invoiceNumberInitial: data.invoiceNumberInitial,
-      logoPreview: data.logoPreview,
-      signaturePreview: data.signaturePreview,
-      accountNumber: data.accountNumber,
-      bankName: data.bankName,
-      ifscCode: data.ifscCode,
-      branch: data.branch,
-    };
-    
+  const handleSubmit = async (data: CompanyFormData) => {
+    try {
     if (editingCompanyId) {
-      dispatch(updateCompany({ id: editingCompanyId, data: serializableData }));
+        await dispatch(updateCompanyThunk({ id: editingCompanyId, data }));
     } else {
-      dispatch(addCompany(serializableData));
+        await dispatch(createCompanyThunk({ company: data }));
     }
     setDialogOpen(false);
     setCompanyData(initialCompanyData);
     setEditingCompanyId(null);
+    } catch (error) {
+      console.error("Error saving company:", error);
+      alert("Failed to save company. Please try again.");
+    }
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -328,10 +322,11 @@ export default function CompaniesPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
+      <div className="mb-6 flex items-start justify-between">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           Companies
         </h1>
+        <RefreshButton onRefresh={handleRefresh} />
       </div>
       <DataTable
         data={companies}

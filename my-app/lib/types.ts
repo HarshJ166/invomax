@@ -18,3 +18,20 @@ export interface Client extends ClientFormData {
   balance: number;
 }
 
+export interface Invoice {
+  id: string;
+  companyId: string;
+  clientId: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string | null;
+  items: string;
+  subtotal: number;
+  taxAmount: number;
+  totalAmount: number;
+  status: "draft" | "sent" | "paid" | "overdue";
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

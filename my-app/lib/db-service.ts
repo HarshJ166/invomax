@@ -69,7 +69,7 @@ interface DbService {
   };
   invoices: {
     getAll: () => Promise<unknown[]>;
-    create: (invoice: unknown) => Promise<{ success: boolean }>;
+    create: (invoice: unknown) => Promise<{ success: boolean; error?: string }>;
     update: (id: string, invoice: unknown) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
     getById: (id: string) => Promise<{ success: boolean; data?: unknown }>;
@@ -249,24 +249,70 @@ export const dbService: DbService = {
   },
   invoices: {
     getAll: async () => {
+      console.log("[db-service] invoices.getAll called");
       const api = getElectronAPI();
-      if (!api) return [];
+      if (!api) {
+        console.error("[db-service] Electron API not available");
+        return [];
+      }
       try {
         const result = await api.db.invoices.getAll();
-        return result.success && result.data ? result.data : [];
+        const invoices = result.success && result.data ? result.data : [];
+        console.log("[db-service] invoices.getAll result:", {
+          success: result.success,
+          count: invoices.length,
+          invoiceIds: invoices.map((inv: { id?: string }) => inv.id),
+        });
+        return invoices;
       } catch (error) {
-        console.error("Error getting invoices:", error);
+        console.error("[db-service] Error getting invoices:", error);
         return [];
       }
     },
     create: async (invoice: unknown) => {
+      console.log("[db-service] invoices.create called");
+      console.log("[db-service] Invoice data:", {
+        id: (invoice as { id?: string })?.id,
+        companyId: (invoice as { companyId?: string })?.companyId,
+        clientId: (invoice as { clientId?: string })?.clientId,
+        invoiceNumber: (invoice as { invoiceNumber?: string })?.invoiceNumber,
+      });
+
       const api = getElectronAPI();
-      if (!api) return { success: false };
+      if (!api) {
+        console.error("[db-service] Electron API not available");
+        return { success: false, error: "Electron API not available" };
+      }
+
       try {
-        return await api.db.invoices.create(invoice);
+        console.log("[db-service] Calling Electron IPC: db:invoices:create");
+        const result = await api.db.invoices.create(invoice);
+        console.log("[db-service] IPC result:", result);
+
+        if (result.success) {
+          console.log("[db-service] Invoice created successfully via IPC");
+          console.log("[db-service] Verifying invoice exists...");
+          const verifyResult = await api.db.invoices.getAll();
+          const invoiceId = (invoice as { id?: string })?.id;
+          if (invoiceId && verifyResult.success && verifyResult.data) {
+            const exists = (verifyResult.data as Array<{ id?: string }>).some(
+              (inv) => inv.id === invoiceId
+            );
+            console.log("[db-service] Verification:", {
+              invoiceId,
+              exists,
+              totalInvoices: verifyResult.data.length,
+            });
+          }
+        } else {
+          console.error("[db-service] IPC returned failure:", result.error);
+        }
+
+        return result;
       } catch (error) {
-        console.error("Error creating invoice:", error);
-        return { success: false };
+        console.error("[db-service] Exception in invoices.create:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return { success: false, error: errorMessage };
       }
     },
     update: async (id: string, invoice: unknown) => {

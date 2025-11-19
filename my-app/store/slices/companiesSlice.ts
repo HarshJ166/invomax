@@ -41,19 +41,27 @@ const companiesSlice = createSlice({
     },
     updateCompany: (
       state,
-      action: PayloadAction<{ id: string; data: CompanyFormData }>
+      action: PayloadAction<{ id: string; data: CompanyFormData | Partial<Company> }>
     ) => {
       const index = state.companies.findIndex(
         (company) => company.id === action.payload.id
       );
       if (index !== -1) {
-        const serializableData = stripFileObjects(action.payload.data);
+        const data = action.payload.data;
+        if ("companyName" in data || "proprietor" in data) {
+          const serializableData = stripFileObjects(data as CompanyFormData);
         state.companies[index] = {
           ...state.companies[index],
           ...serializableData,
           logo: null,
           signature: null,
         };
+        } else {
+          state.companies[index] = {
+            ...state.companies[index],
+            ...data,
+          };
+        }
       }
     },
     deleteCompany: (state, action: PayloadAction<string>) => {

@@ -2,44 +2,56 @@
 
 import * as React from "react";
 import { BentoGrid } from "@/components/molecules/BentoGrid/BentoGrid";
-import { dbService } from "@/lib/db-service";
-import { Company, Item } from "@/lib/types";
+import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { fetchCompanies } from "@/store/thunks/companiesThunks";
+import { fetchItems } from "@/store/thunks/itemsThunks";
+import { fetchInvoices } from "@/store/thunks/invoicesThunks";
+import { Invoice } from "@/lib/types";
 
 export default function DashboardPage() {
-  const [companies, setCompanies] = React.useState<Company[]>([]);
-  const [items, setItems] = React.useState<Item[]>([]);
+  const dispatch = useAppDispatch();
+  const companies = useAppSelector((state) => state.companies.companies);
+  const items = useAppSelector((state) => state.items.items);
+  const [invoices, setInvoices] = React.useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [companiesData, itemsData] = await Promise.all([
-          dbService.companies.getAll(),
-          dbService.items.getAll(),
-        ]);
-        setCompanies(companiesData as Company[]);
-        setItems(itemsData as Item[]);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setIsLoading(false);
+  const fetchData = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [companiesResult, itemsResult, invoicesResult] = await Promise.all([
+        dispatch(fetchCompanies()),
+        dispatch(fetchItems()),
+        dispatch(fetchInvoices()),
+      ]);
+      
+      if (fetchInvoices.fulfilled.match(invoicesResult)) {
+        setInvoices(invoicesResult.payload);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
 
+  React.useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-black dark:text-white">
-          Dashboard
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Welcome to your invoice management dashboard. View statistics and
-          quick actions below.
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-black dark:text-white">
+            Dashboard
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Welcome to your invoice management dashboard. View statistics and
+            quick actions below.
+          </p>
+        </div>
+        <RefreshButton onRefresh={fetchData} />
       </div>
 
       {isLoading ? (
@@ -47,7 +59,7 @@ export default function DashboardPage() {
           <div className="text-muted-foreground">Loading dashboard data...</div>
         </div>
       ) : (
-        <BentoGrid companies={companies} items={items} />
+        <BentoGrid companies={companies} items={items} invoices={invoices} />
       )}
     </div>
   );

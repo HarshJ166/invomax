@@ -6,9 +6,15 @@ import {
   ItemDialog,
   ItemFormData,
 } from "@/components/molecules/ItemDialog/ItemDialog";
+import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { addItem, updateItem, deleteItem } from "@/store/slices/itemsSlice";
 import { Item } from "@/lib/types";
+import {
+  fetchItems,
+  createItemThunk,
+  updateItemThunk,
+  deleteItemThunk,
+} from "@/store/thunks/itemsThunks";
 
 const initialItemData: ItemFormData = {
   itemName: "",
@@ -25,6 +31,10 @@ export default function ItemsPage() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [itemData, setItemData] = React.useState<ItemFormData>(initialItemData);
   const [editingItemId, setEditingItemId] = React.useState<string | null>(null);
+
+  const handleRefresh = React.useCallback(async () => {
+    await dispatch(fetchItems());
+  }, [dispatch]);
 
   const columns: Column<Item>[] = [
     {
@@ -86,22 +96,27 @@ export default function ItemsPage() {
     setDialogOpen(true);
   };
 
-  const handleDelete = (row: Record<string, unknown>) => {
+  const handleDelete = async (row: Record<string, unknown>) => {
     const item = row as Item;
     if (confirm(`Are you sure you want to delete "${item.itemName}"?`)) {
-      dispatch(deleteItem(item.id));
+      await dispatch(deleteItemThunk({ id: item.id }));
     }
   };
 
-  const handleSubmit = (data: ItemFormData) => {
+  const handleSubmit = async (data: ItemFormData) => {
+    try {
     if (editingItemId) {
-      dispatch(updateItem({ id: editingItemId, data }));
+        await dispatch(updateItemThunk({ id: editingItemId, data }));
     } else {
-      dispatch(addItem(data));
+        await dispatch(createItemThunk({ item: data }));
     }
     setDialogOpen(false);
     setItemData(initialItemData);
     setEditingItemId(null);
+    } catch (error) {
+      console.error("Error saving item:", error);
+      alert("Failed to save item. Please try again.");
+    }
   };
 
   const handleDialogClose = (open: boolean) => {
@@ -114,8 +129,9 @@ export default function ItemsPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
+      <div className="mb-6 flex items-start justify-between">
         <h1 className="text-3xl font-bold text-black dark:text-white">Items</h1>
+        <RefreshButton onRefresh={handleRefresh} />
       </div>
       <DataTable
         data={items}

@@ -2,8 +2,12 @@
 
 import * as React from "react";
 import { DataTable, Column } from "@/components/molecules/DataTable/DataTable";
-import { dbService } from "@/lib/db-service";
-import { Company, Client } from "@/lib/types";
+import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { fetchCompanies } from "@/store/thunks/companiesThunks";
+import { fetchClients } from "@/store/thunks/clientsThunks";
+import { fetchInvoices, updateInvoiceThunk } from "@/store/thunks/invoicesThunks";
+import { Company, Client, Invoice } from "@/lib/types";
 import {
   Select,
   SelectContent,
@@ -12,50 +16,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface Invoice {
-  id: string;
-  companyId: string;
-  clientId: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-  dueDate: string | null;
-  items: string;
-  subtotal: number;
-  taxAmount: number;
-  totalAmount: number;
-  status: "draft" | "sent" | "paid" | "overdue";
-  notes: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 interface InvoiceWithDetails extends Invoice {
   companyName: string;
   clientName: string;
 }
 
 export default function InvoiceListPage() {
-  const [invoices, setInvoices] = React.useState<InvoiceWithDetails[]>([]);
-  const [companies, setCompanies] = React.useState<Company[]>([]);
-  const [clients, setClients] = React.useState<Client[]>([]);
+  const dispatch = useAppDispatch();
+  const companies = useAppSelector((state) => state.companies.companies);
+  const clients = useAppSelector((state) => state.clients.clients);
+  const [invoicesWithDetails, setInvoicesWithDetails] = React.useState<InvoiceWithDetails[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   const loadData = React.useCallback(async () => {
     try {
-      const [invoicesData, companiesData, clientsData] = await Promise.all([
-        dbService.invoices.getAll(),
-        dbService.companies.getAll(),
-        dbService.clients.getAll(),
+      setLoading(true);
+      const [invoicesResult, companiesResult, clientsResult] = await Promise.all([
+        dispatch(fetchInvoices()),
+        dispatch(fetchCompanies()),
+        dispatch(fetchClients()),
       ]);
 
-      const companiesList = companiesData as Company[];
-      const clientsList = clientsData as Client[];
-      const invoicesList = invoicesData as Invoice[];
+      if (
+        fetchInvoices.fulfilled.match(invoicesResult) &&
+        fetchCompanies.fulfilled.match(companiesResult) &&
+        fetchClients.fulfilled.match(clientsResult)
+      ) {
+        const invoicesList = invoicesResult.payload;
+        const companiesList = companiesResult.payload;
+        const clientsList = clientsResult.payload;
 
-      setCompanies(companiesList);
-      setClients(clientsList);
-
-      const invoicesWithDetails: InvoiceWithDetails[] = invoicesList.map(
+        const invoicesWithDetailsList: InvoiceWithDetails[] = invoicesList.map(
         (invoice) => {
           const company = companiesList.find((c) => c.id === invoice.companyId);
           const client = clientsList.find((c) => c.id === invoice.clientId);
@@ -72,13 +63,14 @@ export default function InvoiceListPage() {
         }
       );
 
-      setInvoices(invoicesWithDetails);
+        setInvoicesWithDetails(invoicesWithDetailsList);
+      }
     } catch (error) {
       console.error("Error loading invoices:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dispatch]);
 
   React.useEffect(() => {
     loadData();
@@ -89,27 +81,21 @@ export default function InvoiceListPage() {
     newStatus: "paid" | "unpaid"
   ) => {
     try {
-      const invoice = invoices.find((inv) => inv.id === invoiceId);
+      const invoice = invoicesWithDetails.find((inv) => inv.id === invoiceId);
       if (!invoice) return;
 
       const statusToSave = newStatus === "paid" ? "paid" : "sent";
 
-      const updatedInvoice = {
-        companyId: invoice.companyId,
-        clientId: invoice.clientId,
-        invoiceNumber: invoice.invoiceNumber,
-        invoiceDate: invoice.invoiceDate,
-        dueDate: invoice.dueDate,
-        items: invoice.items,
-        subtotal: invoice.subtotal,
-        taxAmount: invoice.taxAmount,
-        totalAmount: invoice.totalAmount,
+      const result = await dispatch(
+        updateInvoiceThunk({
+          id: invoiceId,
+          invoice: {
         status: statusToSave,
-        notes: invoice.notes,
-      };
+          },
+        })
+      );
 
-      const result = await dbService.invoices.update(invoiceId, updatedInvoice);
-      if (result.success) {
+      if (updateInvoiceThunk.fulfilled.match(result)) {
         await loadData();
       } else {
         alert("Failed to update invoice status");
@@ -217,13 +203,14 @@ export default function InvoiceListPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6">
+      <div className="mb-6 flex items-start justify-between">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           Invoice List
         </h1>
+        <RefreshButton onRefresh={loadData} />
       </div>
       <DataTable
-        data={invoices}
+        data={invoicesWithDetails}
         columns={columns}
         getRowId={(row) => row.id}
         showSerialNumber={true}

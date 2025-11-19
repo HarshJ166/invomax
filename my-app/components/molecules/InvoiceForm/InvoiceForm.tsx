@@ -15,8 +15,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PlusIcon, TrashIcon, DownloadIcon, SaveIcon } from "lucide-react";
-import { dbService } from "@/lib/db-service";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { Company, Client, Item } from "@/lib/types";
+import {
+  fetchCompanies,
+  createCompanyThunk,
+  updateCompanyThunk,
+} from "@/store/thunks/companiesThunks";
+import {
+  fetchClients,
+  createClientThunk,
+} from "@/store/thunks/clientsThunks";
+import {
+  fetchItems,
+  createItemThunk,
+} from "@/store/thunks/itemsThunks";
+import {
+  fetchInvoices,
+  createInvoiceThunk,
+  getLastInvoiceByCompanyIdThunk,
+} from "@/store/thunks/invoicesThunks";
 import {
   CompaniesDialog,
   CompanyFormData,
@@ -142,12 +160,17 @@ const initialItemData: ItemFormData = {
   unit: "",
 };
 
-export function InvoiceForm() {
+interface InvoiceFormProps {
+  onRefreshRef?: React.MutableRefObject<(() => Promise<void>) | undefined>;
+}
+
+export function InvoiceForm({ onRefreshRef }: InvoiceFormProps) {
+  const dispatch = useAppDispatch();
+  const companies = useAppSelector((state) => state.companies.companies);
+  const clients = useAppSelector((state) => state.clients.clients);
+  const items = useAppSelector((state) => state.items.items);
   const [invoiceData, setInvoiceData] =
     React.useState<InvoiceFormData>(initialInvoiceData);
-  const [companies, setCompanies] = React.useState<Company[]>([]);
-  const [clients, setClients] = React.useState<Client[]>([]);
-  const [items, setItems] = React.useState<Item[]>([]);
   const [selectedCompany, setSelectedCompany] = React.useState<Company | null>(
     null
   );
@@ -167,22 +190,24 @@ export function InvoiceForm() {
   const [editingItemIndex, setEditingItemIndex] = React.useState<number | null>(
     null
   );
-  const invoiceIdCounterRef = React.useRef(0);
 
   const loadData = React.useCallback(async () => {
-    const [companiesData, clientsData, itemsData] = await Promise.all([
-      dbService.companies.getAll(),
-      dbService.clients.getAll(),
-      dbService.items.getAll(),
+    await Promise.all([
+      dispatch(fetchCompanies()),
+      dispatch(fetchClients()),
+      dispatch(fetchItems()),
     ]);
-    setCompanies(companiesData as Company[]);
-    setClients(clientsData as Client[]);
-    setItems(itemsData as Item[]);
-  }, []);
+  }, [dispatch]);
 
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  React.useEffect(() => {
+    if (onRefreshRef) {
+      onRefreshRef.current = loadData;
+    }
+  }, [loadData, onRefreshRef]);
 
   React.useEffect(() => {
     const fetchLastInvoiceAndSetCompany = async () => {
@@ -197,14 +222,16 @@ export function InvoiceForm() {
           }
 
           if (company.invoiceNumberInitial && invoiceData.invoiceDate) {
-            const lastInvoiceResult =
-              await dbService.invoices.getLastByCompanyId(company.id);
+            const lastInvoiceResult = await dispatch(
+              getLastInvoiceByCompanyIdThunk({ companyId: company.id })
+            );
             let nextInvoiceCount = company.invoiceCount;
 
-            if (lastInvoiceResult.success && lastInvoiceResult.data) {
-              const lastInvoice = lastInvoiceResult.data as {
-                invoiceNumber: string;
-              };
+            if (
+              getLastInvoiceByCompanyIdThunk.fulfilled.match(lastInvoiceResult) &&
+              lastInvoiceResult.payload
+            ) {
+              const lastInvoice = lastInvoiceResult.payload;
               const invoiceNumberParts = lastInvoice.invoiceNumber.split("/");
               if (invoiceNumberParts.length === 3) {
                 const lastCount = parseInt(invoiceNumberParts[1], 10);
@@ -473,16 +500,9 @@ export function InvoiceForm() {
   const totals = calculateTotals();
 
   const handleCompanySubmit = async (data: CompanyFormData) => {
-    const newCompany: Company = {
-      ...data,
-      id: `company-${Date.now()}`,
-      revenueTotal: 0,
-      debt: 0,
-      invoiceCount: 0,
-    };
-
-    const result = await dbService.companies.create(newCompany);
-    if (result.success) {
+    const result = await dispatch(createCompanyThunk({ company: data }));
+    if (createCompanyThunk.fulfilled.match(result)) {
+      const newCompany = result.payload;
       await loadData();
       setInvoiceData((prev) => ({ ...prev, companyId: newCompany.id }));
       setCompanyDialogOpen(false);
@@ -491,14 +511,9 @@ export function InvoiceForm() {
   };
 
   const handleClientSubmit = async (data: ClientFormData) => {
-    const newClient: Client = {
-      ...data,
-      id: `client-${Date.now()}`,
-      balance: 0,
-    };
-
-    const result = await dbService.clients.create(newClient);
-    if (result.success) {
+    const result = await dispatch(createClientThunk({ client: data }));
+    if (createClientThunk.fulfilled.match(result)) {
+      const newClient = result.payload;
       await loadData();
       setInvoiceData((prev) => ({ ...prev, clientId: newClient.id }));
       setClientDialogOpen(false);
@@ -507,13 +522,9 @@ export function InvoiceForm() {
   };
 
   const handleItemSubmit = async (data: ItemFormData) => {
-    const newItem: Item = {
-      ...data,
-      id: `item-${Date.now()}`,
-    };
-
-    const result = await dbService.items.create(newItem);
-    if (result.success) {
+    const result = await dispatch(createItemThunk({ item: data }));
+    if (createItemThunk.fulfilled.match(result)) {
+      const newItem = result.payload;
       await loadData();
       if (editingItemIndex !== null) {
         handleItemSelect(editingItemIndex, newItem.id);
@@ -525,33 +536,103 @@ export function InvoiceForm() {
   };
 
   const generateInvoiceId = () => {
-    invoiceIdCounterRef.current += 1;
-    return `invoice-${invoiceIdCounterRef.current}-${String(
-      invoiceIdCounterRef.current
-    ).padStart(6, "0")}`;
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
+    return `invoice-${timestamp}-${random}`;
+  };
+
+  const generateUniqueInvoiceNumber = async (companyId: string, invoiceDate: string): Promise<string> => {
+    const company = companies.find((c) => c.id === companyId);
+    if (!company || !company.invoiceNumberInitial) {
+      return `INV-${Date.now()}`;
+    }
+
+    const lastInvoiceResult = await dispatch(
+      getLastInvoiceByCompanyIdThunk({ companyId })
+    );
+    let nextInvoiceCount = company.invoiceCount;
+
+    if (
+      getLastInvoiceByCompanyIdThunk.fulfilled.match(lastInvoiceResult) &&
+      lastInvoiceResult.payload
+    ) {
+      const lastInvoice = lastInvoiceResult.payload;
+      const invoiceNumberParts = lastInvoice.invoiceNumber.split("/");
+      if (invoiceNumberParts.length === 3) {
+        const lastCount = parseInt(invoiceNumberParts[1], 10);
+        if (!isNaN(lastCount)) {
+          nextInvoiceCount = lastCount;
+        }
+      }
+    }
+
+    const invoiceDateObj = new Date(invoiceDate);
+    const year = invoiceDateObj.getFullYear();
+    const nextYear = String(year + 1).slice(-2);
+    const currentYear = String(year).slice(-2);
+
+    let attemptCount = 0;
+    let invoiceNumber = "";
+    const invoicesResult = await dispatch(fetchInvoices());
+    const existingInvoiceNumbers = new Set<string>();
+    
+    if (fetchInvoices.fulfilled.match(invoicesResult)) {
+      invoicesResult.payload.forEach((inv) => {
+        existingInvoiceNumbers.add(inv.invoiceNumber);
+      });
+    }
+
+    do {
+      nextInvoiceCount += 1;
+      invoiceNumber = `${company.invoiceNumberInitial}/${String(
+        nextInvoiceCount
+      ).padStart(2, "0")}/${currentYear}-${nextYear}`;
+      attemptCount += 1;
+    } while (existingInvoiceNumbers.has(invoiceNumber) && attemptCount < 1000);
+
+    return invoiceNumber;
   };
 
   const handleSave = async () => {
+    console.log("[InvoiceForm] handleSave called");
+    console.log("[InvoiceForm] invoiceData:", {
+      companyId: invoiceData.companyId,
+      clientId: invoiceData.clientId,
+      itemsCount: invoiceData.items.length,
+      invoiceDate: invoiceData.invoiceDate,
+    });
+
     if (
       !invoiceData.companyId ||
       !invoiceData.clientId ||
       invoiceData.items.length === 0
     ) {
+      console.log("[InvoiceForm] Validation failed - missing required fields");
       alert("Please fill in all required fields and add at least one item.");
       return;
     }
 
     if (!selectedCompany) {
+      console.log("[InvoiceForm] Validation failed - no company selected");
       alert("Please select a company.");
       return;
     }
 
+    console.log("[InvoiceForm] Generating unique invoice number...");
+    const uniqueInvoiceNumber = await generateUniqueInvoiceNumber(
+      invoiceData.companyId,
+      invoiceData.invoiceDate
+    );
+    console.log("[InvoiceForm] Generated invoice number:", uniqueInvoiceNumber);
+
     const invoiceId = generateInvoiceId();
+    console.log("[InvoiceForm] Generated invoice ID:", invoiceId);
+
     const invoicePayload = {
       id: invoiceId,
       companyId: invoiceData.companyId,
       clientId: invoiceData.clientId,
-      invoiceNumber: invoiceData.invoiceNumber,
+      invoiceNumber: uniqueInvoiceNumber,
       invoiceDate: invoiceData.invoiceDate,
       items: JSON.stringify(invoiceData.items),
       subtotal: totals.totalAmountBeforeTax,
@@ -562,16 +643,93 @@ export function InvoiceForm() {
         deliveryNote: invoiceData.deliveryNote,
         modeOfPayment: invoiceData.modeOfPayment,
         supplierReference: invoiceData.supplierReference,
-        buyerOrderNumber: invoiceData.invoiceNumber,
+        buyerOrderNumber: uniqueInvoiceNumber,
         destination: invoiceData.destination,
         gstSlab: invoiceData.gstSlab,
         declaration: invoiceData.declaration,
       }),
     };
 
-    const result = await dbService.invoices.create(invoicePayload);
-    if (result.success) {
-      const invoiceNumberParts = invoiceData.invoiceNumber.split("/");
+    console.log("[InvoiceForm] Invoice payload prepared:", {
+      id: invoicePayload.id,
+      companyId: invoicePayload.companyId,
+      clientId: invoicePayload.clientId,
+      invoiceNumber: invoicePayload.invoiceNumber,
+      totalAmount: invoicePayload.totalAmount,
+    });
+
+    console.log("[InvoiceForm] Dispatching createInvoiceThunk...");
+    let result = await dispatch(
+      createInvoiceThunk({
+        invoice: {
+          id: invoiceId,
+          companyId: invoicePayload.companyId,
+          clientId: invoicePayload.clientId,
+          invoiceNumber: invoicePayload.invoiceNumber,
+          invoiceDate: invoicePayload.invoiceDate,
+          dueDate: null,
+          items: invoicePayload.items,
+          subtotal: invoicePayload.subtotal,
+          taxAmount: invoicePayload.taxAmount,
+          totalAmount: invoicePayload.totalAmount,
+          status: invoicePayload.status,
+          notes: invoicePayload.notes,
+        },
+      })
+    );
+    console.log("[InvoiceForm] createInvoiceThunk result:", {
+      type: result.type,
+      fulfilled: createInvoiceThunk.fulfilled.match(result),
+      rejected: createInvoiceThunk.rejected.match(result),
+      error: createInvoiceThunk.rejected.match(result) ? result.error : null,
+    });
+    let finalInvoiceNumber = uniqueInvoiceNumber;
+    let retryCount = 0;
+    const maxRetries = 5;
+
+    while (!createInvoiceThunk.fulfilled.match(result) && retryCount < maxRetries) {
+      const errorMessage = createInvoiceThunk.rejected.match(result)
+        ? (result.error as string) || ""
+        : "";
+      if (errorMessage.includes("UNIQUE constraint") || errorMessage.includes("invoice_number")) {
+        retryCount += 1;
+        finalInvoiceNumber = await generateUniqueInvoiceNumber(
+          invoiceData.companyId,
+          invoiceData.invoiceDate
+        );
+        invoicePayload.invoiceNumber = finalInvoiceNumber;
+        invoicePayload.notes = JSON.stringify({
+          ...JSON.parse(invoicePayload.notes as string),
+          buyerOrderNumber: finalInvoiceNumber,
+        });
+        result = await dispatch(
+          createInvoiceThunk({
+            invoice: {
+              id: invoiceId,
+              companyId: invoicePayload.companyId,
+              clientId: invoicePayload.clientId,
+              invoiceNumber: invoicePayload.invoiceNumber,
+              invoiceDate: invoicePayload.invoiceDate,
+              dueDate: null,
+              items: invoicePayload.items,
+              subtotal: invoicePayload.subtotal,
+              taxAmount: invoicePayload.taxAmount,
+              totalAmount: invoicePayload.totalAmount,
+              status: invoicePayload.status,
+              notes: invoicePayload.notes,
+            },
+          })
+        );
+      } else {
+        break;
+      }
+    }
+
+    if (createInvoiceThunk.fulfilled.match(result)) {
+      console.log("[InvoiceForm] Invoice created successfully! Invoice:", result.payload);
+      console.log("[InvoiceForm] Updating company invoice count...");
+      
+      const invoiceNumberParts = finalInvoiceNumber.split("/");
       let newInvoiceCount = selectedCompany.invoiceCount;
       if (invoiceNumberParts.length === 3) {
         const count = parseInt(invoiceNumberParts[1], 10);
@@ -584,15 +742,38 @@ export function InvoiceForm() {
         newInvoiceCount = selectedCompany.invoiceCount + 1;
       }
 
-      const updatedCompany = {
-        ...selectedCompany,
-        invoiceCount: newInvoiceCount,
-      };
-      await dbService.companies.update(selectedCompany.id, updatedCompany);
+      console.log("[InvoiceForm] New invoice count:", newInvoiceCount);
+      console.log("[InvoiceForm] Dispatching updateCompanyThunk...");
+      const companyUpdateResult = await dispatch(updateCompanyThunk({ 
+        id: selectedCompany.id, 
+        data: { invoiceCount: newInvoiceCount } as Partial<Company>
+      }));
+      console.log("[InvoiceForm] Company update result:", {
+        type: companyUpdateResult.type,
+        fulfilled: updateCompanyThunk.fulfilled.match(companyUpdateResult),
+      });
+
+      console.log("[InvoiceForm] Verifying invoice still exists in DB...");
+      const verifyResult = await dispatch(fetchInvoices());
+      if (fetchInvoices.fulfilled.match(verifyResult)) {
+        const invoiceExists = verifyResult.payload.some((inv) => inv.id === invoiceId);
+        console.log("[InvoiceForm] Invoice verification:", {
+          invoiceId,
+          exists: invoiceExists,
+          totalInvoices: verifyResult.payload.length,
+        });
+        if (!invoiceExists) {
+          console.error("[InvoiceForm] ERROR: Invoice was deleted after creation!");
+        }
+      }
+
       alert("Invoice saved successfully!");
       setInvoiceData(initialInvoiceData);
+      console.log("[InvoiceForm] Calling loadData()...");
       await loadData();
+      console.log("[InvoiceForm] loadData() completed");
     } else {
+      console.error("[InvoiceForm] Invoice creation failed:", result);
       alert("Failed to save invoice. Please try again.");
     }
   };

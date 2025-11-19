@@ -157,20 +157,54 @@ const setupIpcHandlers = (ipcMain) => {
   });
 
   ipcMain.handle("db:invoices:getAll", () => {
+    console.log("[IPC] db:invoices:getAll handler called");
     try {
-      return { success: true, data: invoicesDb.getAllInvoices() };
+      const invoices = invoicesDb.getAllInvoices();
+      console.log("[IPC] getAllInvoices result:", {
+        count: invoices.length,
+        invoiceIds: invoices.map((inv) => inv.id),
+        invoiceNumbers: invoices.map((inv) => inv.invoiceNumber),
+      });
+      return { success: true, data: invoices };
     } catch (error) {
-      console.error("Error getting invoices:", error);
+      console.error("[IPC] Error getting invoices:", error);
+      console.error("[IPC] Error stack:", error.stack);
       return { success: false, error: error.message };
     }
   });
 
   ipcMain.handle("db:invoices:create", (_, invoice) => {
+    console.log("[IPC] db:invoices:create handler called");
+    console.log("[IPC] Invoice data received:", {
+      id: invoice?.id,
+      companyId: invoice?.companyId,
+      clientId: invoice?.clientId,
+      invoiceNumber: invoice?.invoiceNumber,
+      totalAmount: invoice?.totalAmount,
+    });
+
     try {
+      console.log("[IPC] Calling invoicesDb.createInvoice...");
       invoicesDb.createInvoice(invoice);
+      console.log("[IPC] Invoice created in database");
+
+      console.log("[IPC] Verifying invoice exists in DB...");
+      const allInvoices = invoicesDb.getAllInvoices();
+      const invoiceExists = allInvoices.some((inv) => inv.id === invoice?.id);
+      console.log("[IPC] Verification result:", {
+        invoiceId: invoice?.id,
+        exists: invoiceExists,
+        totalInvoices: allInvoices.length,
+      });
+
+      if (!invoiceExists) {
+        console.error("[IPC] ERROR: Invoice not found after creation!");
+      }
+
       return { success: true };
     } catch (error) {
-      console.error("Error creating invoice:", error);
+      console.error("[IPC] Error creating invoice:", error);
+      console.error("[IPC] Error stack:", error.stack);
       return { success: false, error: error.message };
     }
   });
@@ -186,11 +220,14 @@ const setupIpcHandlers = (ipcMain) => {
   });
 
   ipcMain.handle("db:invoices:delete", (_, id) => {
+    console.log("[IPC] db:invoices:delete handler called with ID:", id);
     try {
       invoicesDb.deleteInvoice(id);
+      console.log("[IPC] Invoice deleted successfully");
       return { success: true };
     } catch (error) {
-      console.error("Error deleting invoice:", error);
+      console.error("[IPC] Error deleting invoice:", error);
+      console.error("[IPC] Error stack:", error.stack);
       return { success: false, error: error.message };
     }
   });
