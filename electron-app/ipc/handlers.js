@@ -7,6 +7,7 @@ const archivesDb = require("../database/archives");
 const dealersDb = require("../database/dealers");
 const dealerArchivesDb = require("../database/dealerArchives");
 const quotationsDb = require("../database/quotations");
+const purchasesDb = require("../database/purchases");
 
 const createHandler = (operation, errorMessage) => {
   return (...args) => {
@@ -480,7 +481,31 @@ const setupIpcHandlers = (ipcMain) => {
       "Error getting quotation by quotation ID:"
     )
   );
+
+  // Purchase Handlers
+  ipcMain.handle(
+    "db:purchases:getAll",
+    createDataHandler(
+      () => purchasesDb.getAllPurchases(),
+      "Error getting purchases:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:purchases:create",
+    createHandler(
+      (_, purchase) => purchasesDb.createPurchase(purchase),
+      "Error creating purchase:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:purchases:delete",
+    createHandler(
+      (_, id) => purchasesDb.deletePurchase(id),
+      "Error deleting purchase:"
+    )
+  );
 };
 
 module.exports = { setupIpcHandlers };
-

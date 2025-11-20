@@ -3,6 +3,7 @@ import companiesReducer from "./slices/companiesSlice";
 import itemsReducer from "./slices/itemsSlice";
 import clientsReducer from "./slices/clientsSlice";
 import dealersReducer from "./slices/dealersSlice";
+import purchasesReducer from "./slices/purchasesSlice";
 import { persistenceMiddleware } from "./middleware/persistence";
 
 export const store = configureStore({
@@ -11,10 +12,10 @@ export const store = configureStore({
     items: itemsReducer,
     clients: clientsReducer,
     dealers: dealersReducer,
+    purchases: purchasesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(persistenceMiddleware),
 });
 
 export type { RootState, AppDispatch } from "./types";
-

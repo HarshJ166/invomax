@@ -160,6 +160,18 @@ const quotations = sqliteTable("quotations", {
   updatedAt: text("updated_at"),
 });
 
+const purchases = sqliteTable("purchases", {
+  id: text("id").primaryKey(),
+  itemId: text("item_id").notNull().references(() => items.id, { onDelete: "cascade" }),
+  clientId: text("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  quantity: real("quantity").notNull(),
+  rate: real("rate").notNull(),
+  amount: real("amount").notNull(),
+  date: text("date").notNull(),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
+});
+
 module.exports = {
   companies,
   clients,
@@ -169,5 +181,5 @@ module.exports = {
   dealers,
   dealerArchives,
   quotations,
+  purchases,
 };
-

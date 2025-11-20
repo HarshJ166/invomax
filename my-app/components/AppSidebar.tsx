@@ -13,6 +13,7 @@ import {
   Trash2,
   CreditCard,
   FileCheck,
+  ShoppingCart,
 } from "lucide-react";
 import {
   Sidebar,
@@ -58,6 +59,11 @@ const navigationItems: NavItem[] = [
     title: "Create Quotation",
     href: "/quotation",
     icon: FileCheck,
+  },
+  {
+    title: "Purchase Entry",
+    href: "/purchase-entry",
+    icon: ShoppingCart,
   },
   {
     title: "Clients",

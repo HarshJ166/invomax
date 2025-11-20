@@ -3,7 +3,7 @@ const { drizzle } = require("drizzle-orm/better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 const { app } = require("electron");
-const { companies, clients, items, invoices, archives, dealers, dealerArchives, quotations } = require("./schema");
+const { companies, clients, items, invoices, archives, dealers, dealerArchives, quotations, purchases } = require("./schema");
 const { migrate } = require("drizzle-orm/better-sqlite3/migrator");
 
 const getDbPath = () => {
@@ -135,25 +135,6 @@ const createTables = () => {
       FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
     );
 
-    CREATE TABLE IF NOT EXISTS invoices (
-      id TEXT PRIMARY KEY,
-      company_id TEXT NOT NULL,
-      client_id TEXT NOT NULL,
-      invoice_number TEXT NOT NULL UNIQUE,
-      invoice_date TEXT NOT NULL,
-      due_date TEXT,
-      items TEXT NOT NULL,
-      subtotal REAL NOT NULL,
-      tax_amount REAL DEFAULT 0,
-      total_amount REAL NOT NULL,
-      status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'sent', 'paid', 'overdue')),
-      notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
-      FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
-    );
-
     CREATE TABLE IF NOT EXISTS archives (
       id TEXT PRIMARY KEY,
       original_id TEXT NOT NULL,
@@ -168,6 +149,7 @@ const createTables = () => {
       total_amount REAL NOT NULL,
       status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'sent', 'paid', 'overdue')),
       notes TEXT,
+      image TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       archived_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -247,6 +229,24 @@ const createTables = () => {
 
     CREATE INDEX IF NOT EXISTS idx_quotations_company_id ON quotations(company_id);
     CREATE INDEX IF NOT EXISTS idx_quotations_quotation_date ON quotations(quotation_date);
+
+    CREATE TABLE IF NOT EXISTS purchases (
+      id TEXT PRIMARY KEY,
+      item_id TEXT NOT NULL,
+      client_id TEXT NOT NULL,
+      quantity REAL NOT NULL,
+      rate REAL NOT NULL,
+      amount REAL NOT NULL,
+      date TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+      FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_purchases_item_id ON purchases(item_id);
+    CREATE INDEX IF NOT EXISTS idx_purchases_client_id ON purchases(client_id);
+    CREATE INDEX IF NOT EXISTS idx_purchases_date ON purchases(date);
   `);
 
   try {
@@ -299,5 +299,5 @@ module.exports = {
   getSqliteDatabase,
   closeDatabase,
   getDbPath,
-  schema: { companies, clients, items, invoices, archives, dealers, dealerArchives, quotations },
+  schema: { companies, clients, items, invoices, archives, dealers, dealerArchives, quotations, purchases },
 };

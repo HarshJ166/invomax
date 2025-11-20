@@ -58,3 +58,8 @@ export {
   getQuotationByQuotationIdThunk,
 } from "./quotationsThunks";
 
+export {
+  fetchPurchases,
+  createPurchaseThunk,
+  deletePurchaseThunk,
+} from "./purchasesThunks";

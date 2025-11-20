@@ -11,6 +11,7 @@ export interface Company extends CompanyFormData {
 
 export interface Item extends ItemFormData {
   id: string;
+  createdAt?: string;
 }
 
 export interface Client extends ClientFormData {
@@ -80,3 +81,14 @@ export interface Quotation {
   updatedAt: string;
 }
 
+export interface Purchase {
+  id: string;
+  itemId: string;
+  clientId: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -7,6 +7,7 @@ import {
   Archive,
   DealerArchive,
   Quotation,
+  Purchase,
 } from "./types";
 
 declare global {
@@ -75,6 +76,11 @@ declare global {
           update: (id: string, quotation: Quotation | Partial<Quotation>) => Promise<{ success: boolean; error?: string }>;
           delete: (id: string) => Promise<{ success: boolean; error?: string }>;
           getByQuotationId: (quotationId: string) => Promise<{ success: boolean; data?: Quotation; error?: string }>;
+        };
+        purchases: {
+          getAll: () => Promise<{ success: boolean; data?: Purchase[]; error?: string }>;
+          create: (purchase: Purchase | Partial<Purchase>) => Promise<{ success: boolean; error?: string }>;
+          delete: (id: string) => Promise<{ success: boolean; error?: string }>;
         };
       };
     };
@@ -205,6 +211,11 @@ interface DbService {
     update: (id: string, quotation: Quotation | Partial<Quotation>) => Promise<{ success: boolean }>;
     delete: (id: string) => Promise<{ success: boolean }>;
     getByQuotationId: (quotationId: string) => Promise<{ success: boolean; data?: Quotation }>;
+  };
+  purchases: {
+    getAll: () => Promise<Purchase[]>;
+    create: (purchase: Purchase | Partial<Purchase>) => Promise<{ success: boolean }>;
+    delete: (id: string) => Promise<{ success: boolean }>;
   };
 }
 
@@ -639,6 +650,39 @@ export const dbService: DbService = {
         return await api.db.quotations.getByQuotationId(quotationId);
       } catch (error) {
         console.error("Error getting quotation by quotation ID:", error);
+        return { success: false };
+      }
+    },
+  },
+  purchases: {
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.purchases.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting purchases:", error);
+        return [];
+      }
+    },
+    create: async (purchase: Purchase | Partial<Purchase>) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.purchases.create(purchase);
+      } catch (error) {
+        console.error("Error creating purchase:", error);
+        return { success: false };
+      }
+    },
+    delete: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.purchases.delete(id);
+      } catch (error) {
+        console.error("Error deleting purchase:", error);
         return { success: false };
       }
     },

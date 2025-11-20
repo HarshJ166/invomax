@@ -1,6 +1,7 @@
 const { getDatabase, schema } = require("./db");
 const { eq, desc } = require("drizzle-orm");
 const { invoices: invoicesTable } = schema;
+const itemsDb = require("./items");
 
 const mapToInvoice = (row) => ({
   id: row.id,
@@ -50,6 +51,7 @@ const createInvoice = (invoice) => {
 
   try {
     const db = getDatabase();
+    const sqliteDb = require("./db").getSqliteDatabase();
     console.log("[DB] Database connection obtained");
 
     const values = {
@@ -68,15 +70,45 @@ const createInvoice = (invoice) => {
       image: invoice.image || null,
     };
 
-    console.log("[DB] Inserting invoice with values:", {
-      id: values.id,
-      companyId: values.companyId,
-      clientId: values.clientId,
-      invoiceNumber: values.invoiceNumber,
+    const transaction = sqliteDb.transaction(() => {
+      console.log("[DB] Inserting invoice with values:", {
+        id: values.id,
+        companyId: values.companyId,
+        clientId: values.clientId,
+        invoiceNumber: values.invoiceNumber,
+      });
+
+      db.insert(invoicesTable).values(values).run();
+      console.log("[DB] Invoice inserted successfully");
+
+      // Update Inventory (Decrease)
+      try {
+        const invoiceItems = JSON.parse(invoice.items);
+        if (Array.isArray(invoiceItems)) {
+          for (const invItem of invoiceItems) {
+            if (invItem.itemId) {
+              const item = itemsDb.getItemById(invItem.itemId);
+              if (item) {
+                const currentQty = parseFloat(item.qtyAvailable) || 0;
+                const invoiceQty = parseFloat(invItem.quantity) || 0;
+                const newQty = currentQty - invoiceQty;
+                
+                console.log(`[DB] Updating inventory for item ${item.itemName}: ${currentQty} - ${invoiceQty} = ${newQty}`);
+                
+                itemsDb.updateItem(item.id, {
+                  ...item,
+                  qtyAvailable: newQty.toString(),
+                });
+              }
+            }
+          }
+        }
+      } catch (parseError) {
+        console.error("[DB] Error parsing invoice items for inventory update:", parseError);
+      }
     });
 
-    db.insert(invoicesTable).values(values).run();
-    console.log("[DB] Invoice inserted successfully");
+    transaction();
 
     console.log("[DB] Verifying invoice exists...");
     const insertedInvoice = getInvoiceById(invoice.id);
@@ -166,4 +198,3 @@ module.exports = {
   deleteInvoice,
   getLastInvoiceByCompanyId,
 };
-
