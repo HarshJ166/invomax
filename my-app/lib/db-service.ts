@@ -6,6 +6,7 @@ import {
   DealerPayment,
   Archive,
   DealerArchive,
+  Quotation,
 } from "./types";
 
 declare global {
@@ -66,6 +67,14 @@ declare global {
         dealerArchives: {
           getAll: () => Promise<{ success: boolean; data?: DealerArchive[]; error?: string }>;
           restore: (archiveId: string) => Promise<{ success: boolean; data?: DealerPayment; error?: string }>;
+        };
+        quotations: {
+          getAll: () => Promise<{ success: boolean; data?: Quotation[]; error?: string }>;
+          getById: (id: string) => Promise<{ success: boolean; data?: Quotation; error?: string }>;
+          create: (quotation: Quotation | Partial<Quotation>) => Promise<{ success: boolean; error?: string }>;
+          update: (id: string, quotation: Quotation | Partial<Quotation>) => Promise<{ success: boolean; error?: string }>;
+          delete: (id: string) => Promise<{ success: boolean; error?: string }>;
+          getByQuotationId: (quotationId: string) => Promise<{ success: boolean; data?: Quotation; error?: string }>;
         };
       };
     };
@@ -188,6 +197,14 @@ interface DbService {
   dealerArchives: {
     getAll: () => Promise<DealerArchive[]>;
     restore: (archiveId: string) => Promise<{ success: boolean; data?: DealerPayment; error?: string }>;
+  };
+  quotations: {
+    getAll: () => Promise<Quotation[]>;
+    getById: (id: string) => Promise<{ success: boolean; data?: Quotation }>;
+    create: (quotation: Quotation | Partial<Quotation>) => Promise<{ success: boolean; error?: string }>;
+    update: (id: string, quotation: Quotation | Partial<Quotation>) => Promise<{ success: boolean }>;
+    delete: (id: string) => Promise<{ success: boolean }>;
+    getByQuotationId: (quotationId: string) => Promise<{ success: boolean; data?: Quotation }>;
   };
 }
 
@@ -559,6 +576,69 @@ export const dbService: DbService = {
         return await api.db.dealerArchives.restore(archiveId);
       } catch (error) {
         console.error("Error restoring dealer archive:", error);
+        return { success: false };
+      }
+    },
+  },
+  quotations: {
+    getAll: async () => {
+      const api = getElectronAPI();
+      if (!api) return [];
+      try {
+        const result = await api.db.quotations.getAll();
+        return result.success && result.data ? result.data : [];
+      } catch (error) {
+        console.error("Error getting quotations:", error);
+        return [];
+      }
+    },
+    getById: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.quotations.getById(id);
+      } catch (error) {
+        console.error("Error getting quotation:", error);
+        return { success: false };
+      }
+    },
+    create: async (quotation: Quotation | Partial<Quotation>) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.quotations.create(quotation);
+      } catch (error) {
+        console.error("Error creating quotation:", error);
+        return { success: false, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+    update: async (id: string, quotation: Quotation | Partial<Quotation>) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.quotations.update(id, quotation);
+      } catch (error) {
+        console.error("Error updating quotation:", error);
+        return { success: false };
+      }
+    },
+    delete: async (id: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.quotations.delete(id);
+      } catch (error) {
+        console.error("Error deleting quotation:", error);
+        return { success: false };
+      }
+    },
+    getByQuotationId: async (quotationId: string) => {
+      const api = getElectronAPI();
+      if (!api) return { success: false };
+      try {
+        return await api.db.quotations.getByQuotationId(quotationId);
+      } catch (error) {
+        console.error("Error getting quotation by quotation ID:", error);
         return { success: false };
       }
     },

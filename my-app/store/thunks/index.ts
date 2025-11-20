@@ -49,3 +49,12 @@ export {
   restoreDealerArchiveThunk,
 } from "./dealerArchivesThunks";
 
+export {
+  fetchQuotations,
+  createQuotationThunk,
+  updateQuotationThunk,
+  deleteQuotationThunk,
+  getQuotationByIdThunk,
+  getQuotationByQuotationIdThunk,
+} from "./quotationsThunks";
+

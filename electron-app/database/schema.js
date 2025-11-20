@@ -143,6 +143,23 @@ const dealerArchives = sqliteTable("dealer_archives", {
   archivedAt: text("archived_at").notNull(),
 });
 
+const quotations = sqliteTable("quotations", {
+  id: text("id").primaryKey(),
+  companyId: text("company_id").notNull().references(() => companies.id, { onDelete: "cascade" }),
+  clientId: text("client_id"),
+  toPartyName: text("to_party_name"),
+  toPartyAddress: text("to_party_address"),
+  quotationId: text("quotation_id").notNull().unique(),
+  subject: text("subject").notNull(),
+  quotationDate: text("quotation_date").notNull(),
+  items: text("items").notNull(),
+  subtotal: real("subtotal").notNull(),
+  totalAmount: real("total_amount").notNull(),
+  termsAndConditions: text("terms_and_conditions"),
+  createdAt: text("created_at"),
+  updatedAt: text("updated_at"),
+});
+
 module.exports = {
   companies,
   clients,
@@ -151,5 +168,6 @@ module.exports = {
   archives,
   dealers,
   dealerArchives,
+  quotations,
 };
 

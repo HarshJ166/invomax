@@ -6,6 +6,7 @@ const invoicesDb = require("../database/invoices");
 const archivesDb = require("../database/archives");
 const dealersDb = require("../database/dealers");
 const dealerArchivesDb = require("../database/dealerArchives");
+const quotationsDb = require("../database/quotations");
 
 const createHandler = (operation, errorMessage) => {
   return (...args) => {
@@ -429,6 +430,54 @@ const setupIpcHandlers = (ipcMain) => {
     createDataHandler(
       (_, archiveId) => dealerArchivesDb.restoreDealerArchive(archiveId),
       "Error restoring dealer archive:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:quotations:getAll",
+    createDataHandler(
+      () => quotationsDb.getAllQuotations(),
+      "Error getting quotations:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:quotations:getById",
+    createDataHandler(
+      (_, id) => quotationsDb.getQuotationById(id),
+      "Error getting quotation:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:quotations:create",
+    createHandler(
+      (_, quotation) => quotationsDb.createQuotation(quotation),
+      "Error creating quotation:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:quotations:update",
+    createHandler(
+      (_, id, quotation) => quotationsDb.updateQuotation(id, quotation),
+      "Error updating quotation:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:quotations:delete",
+    createHandler(
+      (_, id) => quotationsDb.deleteQuotation(id),
+      "Error deleting quotation:"
+    )
+  );
+
+  ipcMain.handle(
+    "db:quotations:getByQuotationId",
+    createDataHandler(
+      (_, quotationId) => quotationsDb.getQuotationByQuotationId(quotationId),
+      "Error getting quotation by quotation ID:"
     )
   );
 };

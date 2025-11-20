@@ -63,3 +63,20 @@ export interface DealerArchive extends DealerPayment {
   archivedAt: string;
 }
 
+export interface Quotation {
+  id: string;
+  companyId: string;
+  clientId: string | null;
+  toPartyName: string | null;
+  toPartyAddress: string | null;
+  quotationId: string;
+  subject: string;
+  quotationDate: string;
+  items: string;
+  subtotal: number;
+  totalAmount: number;
+  termsAndConditions: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

@@ -57,6 +57,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
       getAll: () => ipcRenderer.invoke("db:dealerArchives:getAll"),
       restore: (archiveId) => ipcRenderer.invoke("db:dealerArchives:restore", archiveId),
     },
+    quotations: {
+      getAll: () => ipcRenderer.invoke("db:quotations:getAll"),
+      getById: (id) => ipcRenderer.invoke("db:quotations:getById", id),
+      create: (quotation) => ipcRenderer.invoke("db:quotations:create", quotation),
+      update: (id, quotation) => ipcRenderer.invoke("db:quotations:update", id, quotation),
+      delete: (id) => ipcRenderer.invoke("db:quotations:delete", id),
+      getByQuotationId: (quotationId) => ipcRenderer.invoke("db:quotations:getByQuotationId", quotationId),
+    },
   },
 });
 

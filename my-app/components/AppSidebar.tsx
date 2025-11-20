@@ -12,6 +12,7 @@ import {
   Receipt,
   Trash2,
   CreditCard,
+  FileCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +53,11 @@ const navigationItems: NavItem[] = [
     title: "Create Invoice",
     href: "/invoice",
     icon: FileText,
+  },
+  {
+    title: "Create Quotation",
+    href: "/quotation",
+    icon: FileCheck,
   },
   {
     title: "Clients",

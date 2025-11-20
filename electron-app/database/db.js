@@ -3,7 +3,7 @@ const { drizzle } = require("drizzle-orm/better-sqlite3");
 const path = require("path");
 const fs = require("fs");
 const { app } = require("electron");
-const { companies, clients, items, invoices, archives, dealers, dealerArchives } = require("./schema");
+const { companies, clients, items, invoices, archives, dealers, dealerArchives, quotations } = require("./schema");
 const { migrate } = require("drizzle-orm/better-sqlite3/migrator");
 
 const getDbPath = () => {
@@ -226,6 +226,27 @@ const createTables = () => {
 
     CREATE INDEX IF NOT EXISTS idx_dealer_archives_original_id ON dealer_archives(original_id);
     CREATE INDEX IF NOT EXISTS idx_dealer_archives_archived_at ON dealer_archives(archived_at);
+
+    CREATE TABLE IF NOT EXISTS quotations (
+      id TEXT PRIMARY KEY,
+      company_id TEXT NOT NULL,
+      client_id TEXT,
+      to_party_name TEXT,
+      to_party_address TEXT,
+      quotation_id TEXT NOT NULL UNIQUE,
+      subject TEXT NOT NULL,
+      quotation_date TEXT NOT NULL,
+      items TEXT NOT NULL,
+      subtotal REAL NOT NULL,
+      total_amount REAL NOT NULL,
+      terms_and_conditions TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_quotations_company_id ON quotations(company_id);
+    CREATE INDEX IF NOT EXISTS idx_quotations_quotation_date ON quotations(quotation_date);
   `);
 
   try {
@@ -278,5 +299,5 @@ module.exports = {
   getSqliteDatabase,
   closeDatabase,
   getDbPath,
-  schema: { companies, clients, items, invoices, archives, dealers, dealerArchives },
+  schema: { companies, clients, items, invoices, archives, dealers, dealerArchives, quotations },
 };
