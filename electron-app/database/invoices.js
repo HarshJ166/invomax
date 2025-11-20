@@ -15,6 +15,7 @@ const mapToInvoice = (row) => ({
   totalAmount: row.totalAmount,
   status: row.status,
   notes: row.notes,
+  image: row.image || null,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
@@ -64,6 +65,7 @@ const createInvoice = (invoice) => {
       totalAmount: invoice.totalAmount,
       status: invoice.status || "draft",
       notes: invoice.notes || null,
+      image: invoice.image || null,
     };
 
     console.log("[DB] Inserting invoice with values:", {
@@ -114,6 +116,7 @@ const updateInvoice = (id, invoice) => {
       totalAmount: invoice.totalAmount,
       status: invoice.status || "draft",
       notes: invoice.notes || null,
+      image: invoice.image || null,
       updatedAt: new Date().toISOString(),
     })
     .where(eq(invoicesTable.id, id))

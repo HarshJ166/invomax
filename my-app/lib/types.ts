@@ -31,6 +31,7 @@ export interface Invoice {
   totalAmount: number;
   status: "draft" | "sent" | "paid" | "overdue";
   notes: string | null;
+  image: string | null;
   createdAt: string;
   updatedAt: string;
 }

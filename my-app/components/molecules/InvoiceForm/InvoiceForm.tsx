@@ -14,7 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { PlusIcon, TrashIcon, DownloadIcon, SaveIcon } from "lucide-react";
+import {
+  PlusIcon,
+  TrashIcon,
+  DownloadIcon,
+  SaveIcon,
+  UploadIcon,
+  XIcon,
+} from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { Company, Client, Invoice } from "@/lib/types";
 import {
@@ -83,6 +90,7 @@ interface InvoiceFormData {
   items: InvoiceItem[];
   gstSlab: "18" | "5" | "";
   declaration: string;
+  image: string | null;
 }
 
 const initialInvoiceData: InvoiceFormData = {
@@ -98,6 +106,7 @@ const initialInvoiceData: InvoiceFormData = {
   gstSlab: "",
   declaration:
     "We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.",
+  image: null,
 };
 
 const initialCompanyData: CompanyFormData = {
@@ -242,6 +251,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
               })),
               gstSlab: (notes.gstSlab as "18" | "5" | "") || "",
               declaration: notes.declaration || initialInvoiceData.declaration,
+              image: invoice.image || null,
             });
             setIsEditing(true);
             setEditingInvoiceId(invoice.id);
@@ -366,6 +376,30 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     value: InvoiceFormData[K]
   ) => {
     setInvoiceData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64String = e.target?.result as string;
+      setInvoiceData((prev) => ({ ...prev, image: base64String }));
+    };
+    reader.onerror = () => {
+      alert("Failed to read image file.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleImageRemove = () => {
+    setInvoiceData((prev) => ({ ...prev, image: null }));
   };
 
   const handleItemChange = (
@@ -724,6 +758,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
         gstSlab: invoiceData.gstSlab,
         declaration: invoiceData.declaration,
       }),
+      image: invoiceData.image || null,
     };
 
     console.log("[InvoiceForm] Invoice payload prepared:", {
@@ -750,6 +785,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           totalAmount: invoicePayload.totalAmount,
           status: invoicePayload.status,
           notes: invoicePayload.notes,
+          image: invoicePayload.image,
         },
       })
     );
@@ -799,6 +835,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
               totalAmount: invoicePayload.totalAmount,
               status: invoicePayload.status,
               notes: invoicePayload.notes,
+              image: invoicePayload.image,
             },
           })
         );
@@ -929,6 +966,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
               gstSlab: invoiceData.gstSlab,
               declaration: invoiceData.declaration,
             }),
+            image: invoiceData.image || null,
           },
         })
       );
@@ -1497,6 +1535,59 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                 </div>
               </div>
             )}
+
+            <Separator />
+
+            <div className="space-y-4">
+              <Label>Invoice Image (Optional)</Label>
+              <div className="space-y-2">
+                {invoiceData.image ? (
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={invoiceData.image}
+                      alt="Invoice preview"
+                      className="max-w-full max-h-64 object-contain border rounded"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleImageRemove}
+                      className="mt-2"
+                    >
+                      <XIcon className="size-4 mr-2" />
+                      Remove Image
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="invoice-image-upload"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const input = document.getElementById(
+                          "invoice-image-upload"
+                        ) as HTMLInputElement;
+                        if (input) {
+                          input.click();
+                        }
+                      }}
+                    >
+                      <UploadIcon className="size-4 mr-2" />
+                      Upload Image
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {selectedCompany?.gstNumber && (

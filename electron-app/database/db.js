@@ -128,6 +128,26 @@ const createTables = () => {
       total_amount REAL NOT NULL,
       status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'sent', 'paid', 'overdue')),
       notes TEXT,
+      image TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+      FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS invoices (
+      id TEXT PRIMARY KEY,
+      company_id TEXT NOT NULL,
+      client_id TEXT NOT NULL,
+      invoice_number TEXT NOT NULL UNIQUE,
+      invoice_date TEXT NOT NULL,
+      due_date TEXT,
+      items TEXT NOT NULL,
+      subtotal REAL NOT NULL,
+      tax_amount REAL DEFAULT 0,
+      total_amount REAL NOT NULL,
+      status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'sent', 'paid', 'overdue')),
+      notes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
@@ -207,6 +227,22 @@ const createTables = () => {
     CREATE INDEX IF NOT EXISTS idx_dealer_archives_original_id ON dealer_archives(original_id);
     CREATE INDEX IF NOT EXISTS idx_dealer_archives_archived_at ON dealer_archives(archived_at);
   `);
+
+  try {
+    sqliteDb.exec(`ALTER TABLE invoices ADD COLUMN image TEXT;`);
+  } catch (error) {
+    if (!error.message.includes("duplicate column name") && !error.message.includes("duplicate column")) {
+      console.error("Error adding image column to invoices:", error);
+    }
+  }
+
+  try {
+    sqliteDb.exec(`ALTER TABLE archives ADD COLUMN image TEXT;`);
+  } catch (error) {
+    if (!error.message.includes("duplicate column name") && !error.message.includes("duplicate column")) {
+      console.error("Error adding image column to archives:", error);
+    }
+  }
 };
 
 const getDatabase = () => {

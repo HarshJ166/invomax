@@ -253,6 +253,29 @@ const styles: { [key: string]: React.CSSProperties } = {
     height: "40pt",
     objectFit: "contain",
   },
+  bankDetailsSection: {
+    padding: "3pt 5pt",
+    borderTop: "1pt solid #000",
+    borderBottom: "1pt solid #000",
+    fontSize: "8pt",
+  },
+  bankDetailsTitle: {
+    fontSize: "9pt",
+    fontWeight: "bold",
+    marginBottom: "2pt",
+  },
+  bankDetailsRow: {
+    display: "flex",
+    flexDirection: "row",
+    marginBottom: "1pt",
+  },
+  bankDetailsLabel: {
+    fontWeight: "bold",
+    width: "80pt",
+  },
+  bankDetailsValue: {
+    flex: 1,
+  },
   footerNote: {
     marginTop: "auto",
     paddingTop: "10pt",
@@ -334,82 +357,92 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
     remaining = remaining.slice(ITEMS_PER_PAGE_REST);
   }
 
-  const InvoiceHeader = () => (
-    <div style={styles.headerContainer}>
-      <div style={styles.companySection}>
-        {company.logo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={company.logo} style={styles.logo} alt="Logo" />
-        )}
-        <div style={styles.companyName}>{company.companyName}</div>
-        <div style={styles.companyAddress}>{company.address}</div>
-        <div style={styles.companyAddress}>
-          {company.city}, {company.state}
-        </div>
-        <div style={styles.companyAddress}>Email: {company.email}</div>
-        <div style={styles.companyAddress}>GSTIN: {company.gstNumber}</div>
-      </div>
+  const InvoiceHeader = () => {
+    const logoUrl =
+      company.logoPreview ||
+      (typeof company.logo === "string" ? company.logo : null);
 
-      <div style={styles.invoiceDetailsSection}>
-        <div
-          style={{ fontSize: "14pt", fontWeight: "bold", marginBottom: "5pt" }}
-        >
-          {company.gstNumber ? "Tax Invoice" : "Estimate/Bill of Supply"}
+    return (
+      <div style={styles.headerContainer}>
+        <div style={styles.companySection}>
+          {logoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} style={styles.logo} alt="Logo" />
+          )}
+          <div style={styles.companyName}>{company.companyName}</div>
+          <div style={styles.companyAddress}>{company.address}</div>
+          <div style={styles.companyAddress}>
+            {company.city}, {company.state}
+          </div>
+          <div style={styles.companyAddress}>Email: {company.email}</div>
+          <div style={styles.companyAddress}>GSTIN: {company.gstNumber}</div>
         </div>
-        <div style={styles.detailsGrid}>
-          <div style={styles.detailItem}>
-            <span>Invoice No: </span>
-            <span style={styles.bold}>{invoice.invoiceNumber}</span>
+
+        <div style={styles.invoiceDetailsSection}>
+          <div
+            style={{
+              fontSize: "14pt",
+              fontWeight: "bold",
+              marginBottom: "5pt",
+            }}
+          >
+            {company.gstNumber ? "Tax Invoice" : "Estimate/Bill of Supply"}
           </div>
-          <div style={styles.detailItem}>
-            <span>Dated: </span>
-            <span style={styles.bold}>{invoice.invoiceDate}</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Delivery Note: </span>
-            <span>{notes.deliveryNote || "-"}</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Mode/Terms of Payment: </span>
-            <span>{notes.modeOfPayment || "-"}</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Supplier&apos;s Ref: </span>
-            <span>{notes.supplierReference || "-"}</span>
-          </div>
-          {/* Placeholder fields */}
-          <div style={styles.detailItem}>
-            <span>Other Reference(s): </span>
-            <span>-</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Buyer&apos;s Order No.: </span>
-            <span>{notes.buyerOrderNumber || "-"}</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Dated: </span>
-            <span>-</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Despatch Document No.: </span>
-            <span>-</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Delivery Note Date: </span>
-            <span>-</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Despatched through: </span>
-            <span>-</span>
-          </div>
-          <div style={styles.detailItem}>
-            <span>Destination: </span>
-            <span>{notes.destination || "-"}</span>
+          <div style={styles.detailsGrid}>
+            <div style={styles.detailItem}>
+              <span>Invoice No: </span>
+              <span style={styles.bold}>{invoice.invoiceNumber}</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Dated: </span>
+              <span style={styles.bold}>{invoice.invoiceDate}</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Delivery Note: </span>
+              <span>{notes.deliveryNote || "-"}</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Mode/Terms of Payment: </span>
+              <span>{notes.modeOfPayment || "-"}</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Supplier&apos;s Ref: </span>
+              <span>{notes.supplierReference || "-"}</span>
+            </div>
+            {/* Placeholder fields */}
+            <div style={styles.detailItem}>
+              <span>Other Reference(s): </span>
+              <span>-</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Buyer&apos;s Order No.: </span>
+              <span>{notes.buyerOrderNumber || "-"}</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Dated: </span>
+              <span>-</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Despatch Document No.: </span>
+              <span>-</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Delivery Note Date: </span>
+              <span>-</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Despatched through: </span>
+              <span>-</span>
+            </div>
+            <div style={styles.detailItem}>
+              <span>Destination: </span>
+              <span>{notes.destination || "-"}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const BuyerDetails = () => (
     <div style={styles.buyerContainer}>
@@ -668,6 +701,49 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
                   </div>
                 )}
 
+                {(company.bankName ||
+                  company.accountNumber ||
+                  company.ifscCode ||
+                  company.branch) && (
+                  <div style={styles.bankDetailsSection}>
+                    <div style={styles.bankDetailsTitle}>Bank Details:</div>
+                    {company.bankName && (
+                      <div style={styles.bankDetailsRow}>
+                        <span style={styles.bankDetailsLabel}>Bank Name:</span>
+                        <span style={styles.bankDetailsValue}>
+                          {company.bankName}
+                        </span>
+                      </div>
+                    )}
+                    {company.accountNumber && (
+                      <div style={styles.bankDetailsRow}>
+                        <span style={styles.bankDetailsLabel}>
+                          Account Number:
+                        </span>
+                        <span style={styles.bankDetailsValue}>
+                          {company.accountNumber}
+                        </span>
+                      </div>
+                    )}
+                    {company.ifscCode && (
+                      <div style={styles.bankDetailsRow}>
+                        <span style={styles.bankDetailsLabel}>IFSC Code:</span>
+                        <span style={styles.bankDetailsValue}>
+                          {company.ifscCode}
+                        </span>
+                      </div>
+                    )}
+                    {company.branch && (
+                      <div style={styles.bankDetailsRow}>
+                        <span style={styles.bankDetailsLabel}>Branch:</span>
+                        <span style={styles.bankDetailsValue}>
+                          {company.branch}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div
                   style={{
                     ...styles.declarationSection,
@@ -692,10 +768,18 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
                     <div style={{ fontSize: "8pt", textAlign: "right" }}>
                       For {company.companyName}
                     </div>
-                    {company.signature && (
+                    {(company.signaturePreview ||
+                      (typeof company.signature === "string"
+                        ? company.signature
+                        : null)) && (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={company.signature}
+                        src={
+                          company.signaturePreview ||
+                          (typeof company.signature === "string"
+                            ? company.signature
+                            : "")
+                        }
                         style={styles.signatureImage}
                         alt="Signature"
                       />
@@ -714,6 +798,45 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
           </div>
         );
       })}
+      {invoice.image && (
+        <div key="image-page" style={styles.page}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              width: "100%",
+              padding: "20pt",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "12pt",
+                fontWeight: "bold",
+                marginBottom: "15pt",
+                textAlign: "center",
+              }}
+            >
+              Invoice Image
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={invoice.image}
+              alt="Invoice image"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                width: "auto",
+                height: "auto",
+                objectFit: "contain",
+                border: "1pt solid #ccc",
+              }}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };

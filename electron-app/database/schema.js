@@ -82,6 +82,7 @@ const invoices = sqliteTable("invoices", {
   totalAmount: real("total_amount").notNull(),
   status: text("status", { enum: ["draft", "sent", "paid", "overdue"] }).default("draft"),
   notes: text("notes"),
+  image: text("image"),
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
 });
@@ -100,6 +101,7 @@ const archives = sqliteTable("archives", {
   totalAmount: real("total_amount").notNull(),
   status: text("status", { enum: ["draft", "sent", "paid", "overdue"] }).default("draft"),
   notes: text("notes"),
+  image: text("image"),
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
   archivedAt: text("archived_at").notNull(),

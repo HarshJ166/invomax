@@ -16,6 +16,7 @@ const mapToArchive = (row) => ({
   totalAmount: row.totalAmount,
   status: row.status,
   notes: row.notes,
+  image: row.image || null,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
   archivedAt: row.archivedAt,
@@ -51,6 +52,7 @@ const archiveInvoice = (invoice) => {
     totalAmount: invoice.totalAmount,
     status: invoice.status || "draft",
     notes: invoice.notes || null,
+    image: invoice.image || null,
     createdAt: invoice.createdAt || new Date().toISOString(),
     updatedAt: invoice.updatedAt || new Date().toISOString(),
     archivedAt: new Date().toISOString(),
@@ -84,6 +86,7 @@ const restoreArchive = (archiveId) => {
     totalAmount: archive.totalAmount,
     status: archive.status || "draft",
     notes: archive.notes || null,
+    image: archive.image || null,
     createdAt: archive.createdAt,
     updatedAt: new Date().toISOString(),
   };
