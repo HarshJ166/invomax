@@ -162,6 +162,8 @@ const quotations = sqliteTable("quotations", {
 
 const purchases = sqliteTable("purchases", {
   id: text("id").primaryKey(),
+  invoiceNumber: text("invoice_number"),
+  companyId: text("company_id").references(() => companies.id, { onDelete: "cascade" }),
   itemId: text("item_id").notNull().references(() => items.id, { onDelete: "cascade" }),
   clientId: text("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   quantity: real("quantity").notNull(),

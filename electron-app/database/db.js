@@ -249,21 +249,44 @@ const createTables = () => {
     CREATE INDEX IF NOT EXISTS idx_purchases_date ON purchases(date);
   `);
 
-  try {
-    sqliteDb.exec(`ALTER TABLE invoices ADD COLUMN image TEXT;`);
-  } catch (error) {
-    if (!error.message.includes("duplicate column name") && !error.message.includes("duplicate column")) {
-      console.error("Error adding image column to invoices:", error);
+  // Function to check and add columns safely
+  const addColumnIfNotExists = (table, column, definition) => {
+    try {
+      // Try to select the column to see if it exists
+      sqliteDb.prepare(`SELECT ${column} FROM ${table} LIMIT 1`).get();
+    } catch (error) {
+      // If select fails, the column likely doesn't exist, so add it
+      if (error.message.includes("no such column")) {
+        try {
+          sqliteDb.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition};`);
+          console.log(`Added column ${column} to ${table}`);
+        } catch (alterError) {
+          console.error(`Error adding column ${column} to ${table}:`, alterError);
+        }
+      }
     }
+  };
+
+  // Add new columns to purchases table BEFORE creating indexes on them
+  addColumnIfNotExists('purchases', 'invoice_number', 'TEXT');
+  addColumnIfNotExists('purchases', 'company_id', 'TEXT');
+  
+  // Now create indexes on the new columns (only if they exist)
+  try {
+    sqliteDb.exec(`CREATE INDEX IF NOT EXISTS idx_purchases_invoice_number ON purchases(invoice_number);`);
+  } catch (error) {
+    // Index creation failed, column might not exist yet - ignore
+  }
+  
+  try {
+    sqliteDb.exec(`CREATE INDEX IF NOT EXISTS idx_purchases_company_id ON purchases(company_id);`);
+  } catch (error) {
+    // Index creation failed, column might not exist yet - ignore
   }
 
-  try {
-    sqliteDb.exec(`ALTER TABLE archives ADD COLUMN image TEXT;`);
-  } catch (error) {
-    if (!error.message.includes("duplicate column name") && !error.message.includes("duplicate column")) {
-      console.error("Error adding image column to archives:", error);
-    }
-  }
+  // Add other missing columns
+  addColumnIfNotExists('invoices', 'image', 'TEXT');
+  addColumnIfNotExists('archives', 'image', 'TEXT');
 };
 
 const getDatabase = () => {

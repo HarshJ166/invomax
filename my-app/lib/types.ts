@@ -85,6 +85,8 @@ export interface Purchase {
   id: string;
   itemId: string;
   clientId: string;
+  invoiceNumber?: string | null;
+  companyId?: string | null;
   quantity: number;
   rate: number;
   amount: number;

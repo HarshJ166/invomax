@@ -14,24 +14,24 @@ import {
   createPurchaseThunk,
   deletePurchaseThunk,
 } from "@/store/thunks/purchasesThunks";
-import { fetchItems } from "@/store/thunks/itemsThunks";
+import { fetchItems, createItemThunk } from "@/store/thunks/itemsThunks";
 import { fetchClients } from "@/store/thunks/clientsThunks";
-import { Button } from "@/components/ui/button";
-import { PlusIcon } from "lucide-react";
+import { fetchCompanies } from "@/store/thunks/companiesThunks";
+import { ItemFormData } from "@/components/molecules/ItemDialog/ItemDialog";
 
 const initialPurchaseData: PurchaseFormData = {
-  itemId: "",
+  companyId: "",
   clientId: "",
-  quantity: "",
-  rate: "",
-  amount: "",
+  invoiceNumber: "",
   date: new Date().toISOString().split("T")[0],
+  items: [],
 };
 
 export default function PurchaseEntryPage() {
   const purchases = useAppSelector((state) => state.purchases.purchases);
   const items = useAppSelector((state) => state.items.items);
   const clients = useAppSelector((state) => state.clients.clients);
+  const companies = useAppSelector((state) => state.companies.companies);
   const dispatch = useAppDispatch();
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -42,6 +42,7 @@ export default function PurchaseEntryPage() {
       dispatch(fetchPurchases()),
       dispatch(fetchItems()),
       dispatch(fetchClients()),
+      dispatch(fetchCompanies()),
     ]);
   }, [dispatch]);
 
@@ -56,14 +57,7 @@ export default function PurchaseEntryPage() {
 
   const handleSubmit = async (data: PurchaseFormData) => {
     const result = await dispatch(createPurchaseThunk({
-      purchase: {
-        itemId: data.itemId,
-        clientId: data.clientId,
-        quantity: parseFloat(data.quantity),
-        rate: parseFloat(data.rate),
-        amount: parseFloat(data.amount),
-        date: data.date,
-      }
+      purchase: data as any // Backend handles the structure
     }));
 
     if (createPurchaseThunk.fulfilled.match(result)) {
@@ -72,6 +66,11 @@ export default function PurchaseEntryPage() {
       // Refresh items to show updated quantity
       dispatch(fetchItems());
     }
+  };
+
+  const handleAddItem = async (data: ItemFormData) => {
+    await dispatch(createItemThunk({ item: data }));
+    await dispatch(fetchItems());
   };
 
   const handleDelete = async (purchase: Purchase) => {
@@ -84,6 +83,10 @@ export default function PurchaseEntryPage() {
     {
       header: "Date",
       accessor: "date",
+    },
+    {
+      header: "Invoice No.",
+      accessor: (row) => row.invoiceNumber || "-",
     },
     {
       header: "Item Name",
@@ -134,7 +137,7 @@ export default function PurchaseEntryPage() {
         onCreate={handleCreate}
         onDelete={handleDeleteWrapper}
         getRowId={(row) => (row as unknown as Purchase).id}
-        createButtonLabel="New Purchase"
+        createButtonLabel="New Purchase Bill"
         emptyTitle="No purchases found"
         emptyDescription="Get started by adding your first purchase."
       />
@@ -144,8 +147,10 @@ export default function PurchaseEntryPage() {
         purchaseData={purchaseData}
         onPurchaseDataChange={setPurchaseData}
         onSubmit={handleSubmit}
+        onAddItem={handleAddItem}
         items={items}
         clients={clients}
+        companies={companies}
       />
     </div>
   );

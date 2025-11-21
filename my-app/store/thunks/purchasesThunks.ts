@@ -25,26 +25,21 @@ export const fetchPurchases = createAsyncThunk(
 export const createPurchaseThunk = createAsyncThunk(
   "purchases/createPurchase",
   async (
-    payload: { purchase: Partial<Purchase> },
+    payload: { purchase: any },
     { dispatch, rejectWithValue }
   ) => {
     try {
       const { purchase } = payload;
-      const newPurchase = {
-        ...purchase,
-        id: purchase.id || `purchase-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as Purchase;
-
-      const result = await dbService.purchases.create(newPurchase);
+      // Backend will handle ID generation and multi-item structure
+      const result = await dbService.purchases.create(purchase);
 
       if (!result.success) {
         return rejectWithValue("Failed to create purchase in database");
       }
 
-      dispatch(addPurchase(newPurchase));
-      return newPurchase;
+      // Fetch all purchases again to sync state correctly since backend might create multiple records
+      dispatch(fetchPurchases());
+      return result.data;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create purchase";

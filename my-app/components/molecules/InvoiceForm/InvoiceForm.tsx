@@ -53,6 +53,16 @@ import {
 import { numberToWords } from "@/lib/number-to-words";
 import { renderToStaticMarkup } from "react-dom/server";
 import InvoicePDF from "@/components/pdf/InvoicePDF";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface InvoiceItem {
   id: string;
@@ -202,6 +212,19 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
   const [editingInvoiceId, setEditingInvoiceId] = React.useState<string | null>(
     null
   );
+  const [outOfStockItems, setOutOfStockItems] = React.useState<
+    Set<string>
+  >(new Set());
+  const [consentGivenItems, setConsentGivenItems] = React.useState<
+    Set<string>
+  >(new Set());
+  const [pendingConsentItem, setPendingConsentItem] = React.useState<{
+    itemId: string;
+    itemName: string;
+    requestedQty: number;
+    availableQty: number;
+    index: number;
+  } | null>(null);
 
   const loadData = React.useCallback(async () => {
     await Promise.all([
@@ -210,6 +233,21 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       dispatch(fetchItems()),
     ]);
   }, [dispatch]);
+
+  const checkQuantityAvailability = (
+    itemId: string,
+    quantity: number
+  ): { available: number; exceeds: boolean } | null => {
+    if (!itemId) return null;
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return null;
+
+    const availableQty = parseFloat(item.qtyAvailable) || 0;
+    return {
+      available: availableQty,
+      exceeds: quantity > availableQty,
+    };
+  };
 
   React.useEffect(() => {
     loadData();
@@ -236,6 +274,26 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
               invoiceNumber: invoice.invoiceNumber,
             });
 
+            const loadedItems = items.map((item: InvoiceItem, index: number) => ({
+              ...item,
+              serialNumber: index + 1,
+            }));
+
+            const outOfStockSet = new Set<string>();
+            loadedItems.forEach((item) => {
+              if (item.itemId) {
+                const availability = checkQuantityAvailability(
+                  item.itemId,
+                  item.quantity || 0
+                );
+                if (availability && availability.exceeds) {
+                  outOfStockSet.add(item.itemId);
+                }
+              }
+            });
+
+            setOutOfStockItems(outOfStockSet);
+
             setInvoiceData({
               companyId: invoice.companyId,
               clientId: invoice.clientId,
@@ -245,10 +303,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
               modeOfPayment: notes.modeOfPayment || "",
               supplierReference: notes.supplierReference || "",
               destination: notes.destination || "",
-              items: items.map((item: InvoiceItem, index: number) => ({
-                ...item,
-                serialNumber: index + 1,
-              })),
+              items: loadedItems,
               gstSlab: (notes.gstSlab as "18" | "5" | "") || "",
               declaration: notes.declaration || initialInvoiceData.declaration,
               image: invoice.image || null,
@@ -273,7 +328,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     };
 
     loadInvoiceForEdit();
-  }, [editInvoiceId, dispatch]);
+  }, [editInvoiceId, dispatch, items]);
 
   React.useEffect(() => {
     if (onRefreshRef) {
@@ -409,13 +464,62 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
   ) => {
     setInvoiceData((prev) => {
       const newItems = [...prev.items];
+      const oldItem = newItems[index];
       const item = { ...newItems[index], [field]: value };
 
       if (field === "quantity" || field === "rate") {
         item.amount = (item.quantity || 0) * (item.rate || 0);
       }
 
+      if (field === "itemId" && oldItem.itemId && oldItem.itemId !== value) {
+        setOutOfStockItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(oldItem.itemId);
+          return newSet;
+        });
+        setConsentGivenItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(oldItem.itemId);
+          return newSet;
+        });
+      }
+
       newItems[index] = item;
+
+      if (field === "quantity" && item.itemId) {
+        const quantity = typeof value === "number" ? value : parseFloat(String(value)) || 0;
+        const availability = checkQuantityAvailability(item.itemId, quantity);
+
+        if (availability && availability.exceeds && quantity > 0) {
+          const itemData = items.find((i) => i.id === item.itemId);
+          if (itemData && !consentGivenItems.has(item.itemId)) {
+            setPendingConsentItem({
+              itemId: item.itemId,
+              itemName: itemData.itemName,
+              requestedQty: quantity,
+              availableQty: availability.available,
+              index,
+            });
+            setOutOfStockItems((prev) => new Set(prev).add(item.itemId));
+            return prev;
+          } else if (availability && availability.exceeds) {
+            setOutOfStockItems((prev) => new Set(prev).add(item.itemId));
+          } else {
+            setOutOfStockItems((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(item.itemId);
+              return newSet;
+            });
+          }
+        } else if (availability && !availability.exceeds) {
+          setOutOfStockItems((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(item.itemId);
+            return newSet;
+          });
+        }
+      }
+
       return { ...prev, items: newItems };
     });
   };
@@ -432,8 +536,25 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
         if (!currentItem) return prev;
 
         if (currentItem.itemId === itemId && currentItem.itemId !== "") {
-          currentItem.quantity = (currentItem.quantity || 0) + 1;
-          currentItem.amount = currentItem.quantity * (currentItem.rate || 0);
+          const newQuantity = (currentItem.quantity || 0) + 1;
+          currentItem.quantity = newQuantity;
+          currentItem.amount = newQuantity * (currentItem.rate || 0);
+
+          const availability = checkQuantityAvailability(itemId, newQuantity);
+          if (availability && availability.exceeds && !consentGivenItems.has(itemId)) {
+            setPendingConsentItem({
+              itemId,
+              itemName: item.itemName,
+              requestedQty: newQuantity,
+              availableQty: availability.available,
+              index,
+            });
+            setOutOfStockItems((prev) => new Set(prev).add(itemId));
+            return prev;
+          } else if (availability && availability.exceeds) {
+            setOutOfStockItems((prev) => new Set(prev).add(itemId));
+          }
+
           return { ...prev, items: newItems };
         }
 
@@ -448,9 +569,24 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
 
         if (existingItemIndex !== -1) {
           const existingItem = newItems[existingItemIndex];
-          existingItem.quantity = (existingItem.quantity || 0) + 1;
-          existingItem.amount =
-            existingItem.quantity * (existingItem.rate || 0);
+          const newQuantity = (existingItem.quantity || 0) + 1;
+          existingItem.quantity = newQuantity;
+          existingItem.amount = newQuantity * (existingItem.rate || 0);
+
+          const availability = checkQuantityAvailability(itemId, newQuantity);
+          if (availability && availability.exceeds && !consentGivenItems.has(itemId)) {
+            setPendingConsentItem({
+              itemId,
+              itemName: item.itemName,
+              requestedQty: newQuantity,
+              availableQty: availability.available,
+              index: existingItemIndex,
+            });
+            setOutOfStockItems((prev) => new Set(prev).add(itemId));
+            return prev;
+          } else if (availability && availability.exceeds) {
+            setOutOfStockItems((prev) => new Set(prev).add(itemId));
+          }
 
           newItems.splice(index, 1);
           newItems.forEach((invItem, i) => {
@@ -458,6 +594,22 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           });
 
           return { ...prev, items: newItems };
+        }
+
+        const initialQuantity = newItems[index].quantity || 1;
+        const availability = checkQuantityAvailability(itemId, initialQuantity);
+        if (availability && availability.exceeds && !consentGivenItems.has(itemId)) {
+          setPendingConsentItem({
+            itemId,
+            itemName: item.itemName,
+            requestedQty: initialQuantity,
+            availableQty: availability.available,
+            index,
+          });
+          setOutOfStockItems((prev) => new Set(prev).add(itemId));
+          return prev;
+        } else if (availability && availability.exceeds) {
+          setOutOfStockItems((prev) => new Set(prev).add(itemId));
         }
 
         newItems[index] = {
@@ -470,14 +622,13 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           rate: parseFloat(item.rate) || 0,
           unit: item.unit || "",
           per: item.unit || "",
-          quantity: newItems[index].quantity || 1,
-          amount:
-            (newItems[index].quantity || 1) * (parseFloat(item.rate) || 0),
+          quantity: initialQuantity,
+          amount: initialQuantity * (parseFloat(item.rate) || 0),
         };
         return { ...prev, items: newItems };
       });
     },
-    [items]
+    [items, consentGivenItems]
   );
 
   const addItemRow = () => {
@@ -522,10 +673,25 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
 
   const removeItemRow = (index: number) => {
     setInvoiceData((prev) => {
+      const itemToRemove = prev.items[index];
       const newItems = prev.items.filter((_, i) => i !== index);
       newItems.forEach((item, i) => {
         item.serialNumber = i + 1;
       });
+
+      if (itemToRemove?.itemId) {
+        setOutOfStockItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemToRemove.itemId);
+          return newSet;
+        });
+        setConsentGivenItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemToRemove.itemId);
+          return newSet;
+        });
+      }
+
       return { ...prev, items: newItems };
     });
   };
@@ -898,6 +1064,9 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       if (!skipReset) {
         alert("Invoice saved successfully!");
         setInvoiceData(initialInvoiceData);
+        setOutOfStockItems(new Set());
+        setConsentGivenItems(new Set());
+        setPendingConsentItem(null);
         console.log("[InvoiceForm] Calling loadData()...");
         await loadData();
         console.log("[InvoiceForm] loadData() completed");
@@ -987,6 +1156,9 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           setInvoiceData(initialInvoiceData);
           setIsEditing(false);
           setEditingInvoiceId(null);
+          setOutOfStockItems(new Set());
+          setConsentGivenItems(new Set());
+          setPendingConsentItem(null);
           await loadData();
         }
 
@@ -1070,6 +1242,9 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       setInvoiceData(initialInvoiceData);
       setIsEditing(false);
       setEditingInvoiceId(null);
+      setOutOfStockItems(new Set());
+      setConsentGivenItems(new Set());
+      setPendingConsentItem(null);
       await loadData();
     } catch (error) {
       console.error("Failed to generate PDF:", error);
@@ -1320,9 +1495,21 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoiceData.items.map((item, index) => (
-                    <tr key={item.id}>
-                      <td className="border p-2">
+                  {invoiceData.items.map((item, index) => {
+                    const isOutOfStock = item.itemId
+                      ? outOfStockItems.has(item.itemId)
+                      : false;
+                    const itemData = items.find((i) => i.id === item.itemId);
+                    const availableQty = itemData
+                      ? parseFloat(itemData.qtyAvailable) || 0
+                      : null;
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className={isOutOfStock ? "bg-destructive/10" : ""}
+                      >
+                        <td className="border p-2">
                         <Input
                           type="number"
                           value={item.serialNumber}
@@ -1393,20 +1580,33 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                         />
                       </td>
                       <td className="border p-2">
-                        <Input
-                          type="number"
-                          value={item.quantity || ""}
-                          onChange={(e) =>
-                            handleItemChange(
-                              index,
-                              "quantity",
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          placeholder="0"
-                          min="0"
-                          step="0.01"
-                        />
+                        <div className="space-y-1">
+                          <Input
+                            type="number"
+                            value={item.quantity || ""}
+                            onChange={(e) =>
+                              handleItemChange(
+                                index,
+                                "quantity",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                            className={
+                              isOutOfStock
+                                ? "border-destructive focus-visible:ring-destructive"
+                                : ""
+                            }
+                          />
+                          {isOutOfStock && availableQty !== null && (
+                            <p className="text-xs text-destructive font-medium">
+                              Available: {availableQty.toLocaleString()}{" "}
+                              {item.unit || ""}
+                            </p>
+                          )}
+                        </div>
                       </td>
                       <td className="border p-2">
                         <Input
@@ -1461,7 +1661,8 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                   {invoiceData.items.length === 0 && (
                     <tr>
                       <td
@@ -1806,6 +2007,92 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
         onSubmit={handleItemSubmit}
         title="Add New Item"
       />
+
+      <AlertDialog
+        open={pendingConsentItem !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingConsentItem(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Insufficient Inventory</AlertDialogTitle>
+            <AlertDialogDescription>
+              The quantity requested for{" "}
+              <strong>{pendingConsentItem?.itemName}</strong> exceeds the
+              available inventory.
+              <br />
+              <br />
+              <strong>Requested:</strong>{" "}
+              {pendingConsentItem?.requestedQty.toLocaleString()}{" "}
+              {invoiceData.items.find(
+                (i) => i.itemId === pendingConsentItem?.itemId
+              )?.unit || ""}
+              <br />
+              <strong>Available:</strong>{" "}
+              {pendingConsentItem?.availableQty.toLocaleString()}{" "}
+              {invoiceData.items.find(
+                (i) => i.itemId === pendingConsentItem?.itemId
+              )?.unit || ""}
+              <br />
+              <br />
+              Do you want to proceed with creating the invoice despite the
+              insufficient inventory? This will allow you to create the invoice
+              but the item will be marked as out of stock.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                if (pendingConsentItem) {
+                  setInvoiceData((prev) => {
+                    const newItems = [...prev.items];
+                    const item = newItems[pendingConsentItem.index];
+                    if (item) {
+                      item.quantity = pendingConsentItem.availableQty;
+                      item.amount =
+                        pendingConsentItem.availableQty * (item.rate || 0);
+                    }
+                    return { ...prev, items: newItems };
+                  });
+                  setOutOfStockItems((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.delete(pendingConsentItem.itemId);
+                    return newSet;
+                  });
+                }
+                setPendingConsentItem(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingConsentItem) {
+                  setConsentGivenItems((prev) =>
+                    new Set(prev).add(pendingConsentItem.itemId)
+                  );
+                  setInvoiceData((prev) => {
+                    const newItems = [...prev.items];
+                    const item = newItems[pendingConsentItem.index];
+                    if (item) {
+                      item.quantity = pendingConsentItem.requestedQty;
+                      item.amount =
+                        pendingConsentItem.requestedQty * (item.rate || 0);
+                    }
+                    return { ...prev, items: newItems };
+                  });
+                }
+                setPendingConsentItem(null);
+              }}
+            >
+              Proceed
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
