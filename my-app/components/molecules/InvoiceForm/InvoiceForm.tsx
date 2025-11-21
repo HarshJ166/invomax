@@ -21,6 +21,7 @@ import {
   SaveIcon,
   UploadIcon,
   XIcon,
+  EyeIcon,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { Company, Client, Invoice } from "@/lib/types";
@@ -63,6 +64,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface InvoiceItem {
   id: string;
@@ -225,6 +232,24 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     availableQty: number;
     index: number;
   } | null>(null);
+  const [previewOpen, setPreviewOpen] = React.useState(false);
+  const [previewPdfBlob, setPreviewPdfBlob] = React.useState<Blob | null>(null);
+  const [previewPdfUrl, setPreviewPdfUrl] = React.useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = React.useState("");
+  const [previewFilename, setPreviewFilename] = React.useState("");
+  const [pendingSave, setPendingSave] = React.useState(false);
+
+  React.useEffect(() => {
+    if (previewPdfBlob) {
+      const url = URL.createObjectURL(previewPdfBlob);
+      setPreviewPdfUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewPdfUrl(null);
+    }
+  }, [previewPdfBlob]);
 
   const loadData = React.useCallback(async () => {
     await Promise.all([
@@ -862,6 +887,65 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     },
     [companies, dispatch]
   );
+
+  const createInvoiceFromFormData = (): Invoice => {
+    const invoiceId = isEditing && editingInvoiceId ? editingInvoiceId : generateInvoiceId();
+    return {
+      id: invoiceId,
+      companyId: invoiceData.companyId,
+      clientId: invoiceData.clientId,
+      invoiceNumber: invoiceData.invoiceNumber,
+      invoiceDate: invoiceData.invoiceDate,
+      dueDate: null,
+      items: JSON.stringify(invoiceData.items),
+      subtotal: totals.totalAmountBeforeTax,
+      taxAmount: totals.totalTaxAmount,
+      totalAmount: totals.totalInvoiceAmount,
+      status: "draft" as const,
+      notes: JSON.stringify({
+        deliveryNote: invoiceData.deliveryNote,
+        modeOfPayment: invoiceData.modeOfPayment,
+        supplierReference: invoiceData.supplierReference,
+        buyerOrderNumber: invoiceData.invoiceNumber,
+        destination: invoiceData.destination,
+        gstSlab: invoiceData.gstSlab,
+        declaration: invoiceData.declaration,
+      }),
+      image: invoiceData.image || null,
+    };
+  };
+
+  const handlePreview = async () => {
+    if (!selectedCompany || !selectedClient) {
+      alert("Please select company and client first.");
+      return;
+    }
+
+    if (
+      !invoiceData.companyId ||
+      !invoiceData.clientId ||
+      invoiceData.items.length === 0
+    ) {
+      alert("Please fill in all required fields and add at least one item.");
+      return;
+    }
+
+    try {
+      const tempInvoice = createInvoiceFromFormData();
+      const blob = await generatePDF(tempInvoice, selectedCompany, selectedClient);
+      setPreviewPdfBlob(blob);
+      setPreviewTitle(
+        isEditing
+          ? `Preview Invoice ${invoiceData.invoiceNumber}`
+          : "Preview Invoice"
+      );
+      setPreviewFilename(`invoice_${invoiceData.invoiceNumber}.pdf`);
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error("Failed to generate preview:", error);
+      alert("Failed to generate preview. Please try again.");
+    }
+  };
 
   const handleSave = async (skipReset = false): Promise<Invoice | null> => {
     if (isEditing && editingInvoiceId) {
@@ -1968,12 +2052,52 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
             <Button
               type="button"
               variant="outline"
+              onClick={handlePreview}
+            >
+              <EyeIcon className="size-4 mr-2" />
+              Preview
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleDownloadAndSave}
             >
               <DownloadIcon className="size-4 mr-2" />
               Download PDF
             </Button>
-            <Button type="button" onClick={() => handleSave()}>
+            <Button type="button" onClick={async () => {
+              if (!selectedCompany || !selectedClient) {
+                alert("Please select company and client first.");
+                return;
+              }
+
+              if (
+                !invoiceData.companyId ||
+                !invoiceData.clientId ||
+                invoiceData.items.length === 0
+              ) {
+                alert("Please fill in all required fields and add at least one item.");
+                return;
+              }
+
+              setPendingSave(true);
+              try {
+                const tempInvoice = createInvoiceFromFormData();
+                const blob = await generatePDF(tempInvoice, selectedCompany, selectedClient);
+                setPreviewPdfBlob(blob);
+                setPreviewTitle(
+                  isEditing
+                    ? `Preview Invoice ${invoiceData.invoiceNumber}`
+                    : "Preview Invoice"
+                );
+                setPreviewFilename(`invoice_${invoiceData.invoiceNumber}.pdf`);
+                setPreviewOpen(true);
+              } catch (error) {
+                console.error("Failed to generate preview:", error);
+                alert("Failed to generate preview. Please try again.");
+                setPendingSave(false);
+              }
+            }}>
               <SaveIcon className="size-4 mr-2" />
               {isEditing ? "Update Invoice" : "Save Invoice"}
             </Button>
@@ -2093,6 +2217,83 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={previewOpen} onOpenChange={(open) => {
+        setPreviewOpen(open);
+        if (!open) {
+          setPendingSave(false);
+        }
+      }}>
+        <DialogContent className="max-w-5xl w-full h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle>{previewTitle}</DialogTitle>
+              <div className="flex gap-2">
+                {previewPdfBlob && previewFilename && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (previewPdfBlob && previewFilename) {
+                        await downloadPDF(previewPdfBlob, previewFilename);
+                      }
+                    }}
+                  >
+                    <DownloadIcon className="size-4 mr-2" />
+                    Download
+                  </Button>
+                )}
+                {pendingSave && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={async () => {
+                      setPreviewOpen(false);
+                      const result = await handleSave();
+                      setPendingSave(false);
+                      if (result) {
+                        alert(
+                          isEditing
+                            ? "Invoice updated successfully!"
+                            : "Invoice saved successfully!"
+                        );
+                      }
+                    }}
+                  >
+                    <SaveIcon className="size-4 mr-2" />
+                    {isEditing ? "Update Invoice" : "Save Invoice"}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    setPreviewOpen(false);
+                    setPendingSave(false);
+                  }}
+                >
+                  <XIcon className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden p-6">
+            {previewPdfUrl ? (
+              <iframe
+                src={previewPdfUrl}
+                className="w-full h-full border-0"
+                title={previewTitle}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading PDF...</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

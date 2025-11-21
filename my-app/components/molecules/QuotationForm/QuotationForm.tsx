@@ -19,6 +19,8 @@ import {
   TrashIcon,
   DownloadIcon,
   SaveIcon,
+  EyeIcon,
+  XIcon,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { Company, Client, Quotation } from "@/lib/types";
@@ -50,6 +52,12 @@ import {
 import { numberToWords } from "@/lib/number-to-words";
 import { renderToStaticMarkup } from "react-dom/server";
 import QuotationPDF from "@/components/pdf/QuotationPDF";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface QuotationItem {
   id: string;
@@ -180,6 +188,24 @@ export function QuotationForm({ onRefreshRef, editQuotationId }: QuotationFormPr
   const [editingQuotationId, setEditingQuotationId] = React.useState<string | null>(
     null
   );
+  const [previewOpen, setPreviewOpen] = React.useState(false);
+  const [previewPdfBlob, setPreviewPdfBlob] = React.useState<Blob | null>(null);
+  const [previewPdfUrl, setPreviewPdfUrl] = React.useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = React.useState("");
+  const [previewFilename, setPreviewFilename] = React.useState("");
+  const [pendingSave, setPendingSave] = React.useState(false);
+
+  React.useEffect(() => {
+    if (previewPdfBlob) {
+      const url = URL.createObjectURL(previewPdfBlob);
+      setPreviewPdfUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
+      };
+    } else {
+      setPreviewPdfUrl(null);
+    }
+  }, [previewPdfBlob]);
 
   const loadData = React.useCallback(async () => {
     await Promise.all([
@@ -385,6 +411,76 @@ export function QuotationForm({ onRefreshRef, editQuotationId }: QuotationFormPr
   };
 
   const totals = calculateTotals();
+
+  const createQuotationFromFormData = (): Quotation => {
+    const quotationId = isEditing && editingQuotationId ? editingQuotationId : generateQuotationId();
+    return {
+      id: quotationId,
+      companyId: quotationData.companyId,
+      clientId: useClient ? quotationData.clientId : null,
+      toPartyName: useClient ? null : quotationData.toPartyName,
+      toPartyAddress: useClient ? null : quotationData.toPartyAddress,
+      quotationId: quotationData.quotationId,
+      subject: quotationData.subject,
+      quotationDate: quotationData.quotationDate,
+      items: JSON.stringify(quotationData.items),
+      subtotal: totals.totalAmount,
+      totalAmount: totals.totalAmount,
+      termsAndConditions: quotationData.termsAndConditions,
+    };
+  };
+
+  const handlePreview = async () => {
+    if (!selectedCompany) {
+      alert("Please select company first.");
+      return;
+    }
+
+    if (
+      !quotationData.companyId ||
+      !quotationData.quotationId ||
+      !quotationData.subject ||
+      quotationData.items.length === 0
+    ) {
+      alert("Please fill in all required fields and add at least one item.");
+      return;
+    }
+
+    if (useClient && !quotationData.clientId) {
+      alert("Please select a client or enter party details manually.");
+      return;
+    }
+
+    if (!useClient && (!quotationData.toPartyName || !quotationData.toPartyAddress)) {
+      alert("Please enter party name and address.");
+      return;
+    }
+
+    try {
+      const tempQuotation = createQuotationFromFormData();
+      const client = useClient && quotationData.clientId
+        ? clients.find((c) => c.id === quotationData.clientId) || null
+        : null;
+      const blob = await generatePDF(
+        tempQuotation,
+        selectedCompany,
+        client,
+        useClient ? null : quotationData.toPartyName,
+        useClient ? null : quotationData.toPartyAddress
+      );
+      setPreviewPdfBlob(blob);
+      setPreviewTitle(
+        isEditing
+          ? `Preview Quotation ${quotationData.quotationId}`
+          : "Preview Quotation"
+      );
+      setPreviewFilename(`quotation_${quotationData.quotationId}.pdf`);
+      setPreviewOpen(true);
+    } catch (error) {
+      console.error("Failed to generate preview:", error);
+      alert("Failed to generate preview. Please try again.");
+    }
+  };
 
   const handleCompanySubmit = async (data: CompanyFormData) => {
     const result = await dispatch(createCompanyThunk({ company: data }));
@@ -1148,12 +1244,72 @@ export function QuotationForm({ onRefreshRef, editQuotationId }: QuotationFormPr
             <Button
               type="button"
               variant="outline"
+              onClick={handlePreview}
+            >
+              <EyeIcon className="size-4 mr-2" />
+              Preview
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleDownloadAndSave}
             >
               <DownloadIcon className="size-4 mr-2" />
               Download PDF
             </Button>
-            <Button type="button" onClick={() => handleSave()}>
+            <Button type="button" onClick={async () => {
+              if (!selectedCompany) {
+                alert("Please select company first.");
+                return;
+              }
+
+              if (
+                !quotationData.companyId ||
+                !quotationData.quotationId ||
+                !quotationData.subject ||
+                quotationData.items.length === 0
+              ) {
+                alert("Please fill in all required fields and add at least one item.");
+                return;
+              }
+
+              if (useClient && !quotationData.clientId) {
+                alert("Please select a client or enter party details manually.");
+                return;
+              }
+
+              if (!useClient && (!quotationData.toPartyName || !quotationData.toPartyAddress)) {
+                alert("Please enter party name and address.");
+                return;
+              }
+
+              setPendingSave(true);
+              try {
+                const tempQuotation = createQuotationFromFormData();
+                const client = useClient && quotationData.clientId
+                  ? clients.find((c) => c.id === quotationData.clientId) || null
+                  : null;
+                const blob = await generatePDF(
+                  tempQuotation,
+                  selectedCompany,
+                  client,
+                  useClient ? null : quotationData.toPartyName,
+                  useClient ? null : quotationData.toPartyAddress
+                );
+                setPreviewPdfBlob(blob);
+                setPreviewTitle(
+                  isEditing
+                    ? `Preview Quotation ${quotationData.quotationId}`
+                    : "Preview Quotation"
+                );
+                setPreviewFilename(`quotation_${quotationData.quotationId}.pdf`);
+                setPreviewOpen(true);
+              } catch (error) {
+                console.error("Failed to generate preview:", error);
+                alert("Failed to generate preview. Please try again.");
+                setPendingSave(false);
+              }
+            }}>
               <SaveIcon className="size-4 mr-2" />
               {isEditing ? "Update Quotation" : "Save Quotation"}
             </Button>
@@ -1187,6 +1343,83 @@ export function QuotationForm({ onRefreshRef, editQuotationId }: QuotationFormPr
         onSubmit={handleItemSubmit}
         title="Add New Item"
       />
+
+      <Dialog open={previewOpen} onOpenChange={(open) => {
+        setPreviewOpen(open);
+        if (!open) {
+          setPendingSave(false);
+        }
+      }}>
+        <DialogContent className="max-w-5xl w-full h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <DialogTitle>{previewTitle}</DialogTitle>
+              <div className="flex gap-2">
+                {previewPdfBlob && previewFilename && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (previewPdfBlob && previewFilename) {
+                        await downloadPDF(previewPdfBlob, previewFilename);
+                      }
+                    }}
+                  >
+                    <DownloadIcon className="size-4 mr-2" />
+                    Download
+                  </Button>
+                )}
+                {pendingSave && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={async () => {
+                      setPreviewOpen(false);
+                      const result = await handleSave();
+                      setPendingSave(false);
+                      if (result) {
+                        alert(
+                          isEditing
+                            ? "Quotation updated successfully!"
+                            : "Quotation saved successfully!"
+                        );
+                      }
+                    }}
+                  >
+                    <SaveIcon className="size-4 mr-2" />
+                    {isEditing ? "Update Quotation" : "Save Quotation"}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    setPreviewOpen(false);
+                    setPendingSave(false);
+                  }}
+                >
+                  <XIcon className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden p-6">
+            {previewPdfUrl ? (
+              <iframe
+                src={previewPdfUrl}
+                className="w-full h-full border-0"
+                title={previewTitle}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Loading PDF...</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

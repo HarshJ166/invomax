@@ -18,13 +18,14 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DownloadIcon, EditIcon, TrashIcon } from "lucide-react";
+import { DownloadIcon, EditIcon, TrashIcon, EyeIcon } from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import InvoicePDF from "@/components/pdf/InvoicePDF";
 import QuotationPDF from "@/components/pdf/QuotationPDF";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { archiveInvoiceThunk } from "@/store/thunks/invoicesThunks";
 import { useRouter } from "next/navigation";
+import { PDFViewerDialog } from "@/components/molecules/PDFViewerDialog/PDFViewerDialog";
 
 interface InvoiceWithDetails extends Invoice {
   companyName: string;
@@ -45,6 +46,10 @@ export default function InvoiceListPage() {
   const [quotationsWithDetails, setQuotationsWithDetails] = React.useState<QuotationWithDetails[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState("invoices");
+  const [viewerOpen, setViewerOpen] = React.useState(false);
+  const [viewerPdfBlob, setViewerPdfBlob] = React.useState<Blob | null>(null);
+  const [viewerTitle, setViewerTitle] = React.useState("");
+  const [viewerFilename, setViewerFilename] = React.useState("");
 
   const loadData = React.useCallback(async () => {
     try {
@@ -189,6 +194,27 @@ export default function InvoiceListPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleViewInvoice = async (invoice: InvoiceWithDetails) => {
+    try {
+      const company = companies.find((c) => c.id === invoice.companyId);
+      const client = clients.find((c) => c.id === invoice.clientId);
+
+      if (!company || !client) {
+        alert("Company or client information not found for this invoice.");
+        return;
+      }
+
+      const blob = await generatePDF(invoice, company, client);
+      setViewerPdfBlob(blob);
+      setViewerTitle(`Invoice ${invoice.invoiceNumber}`);
+      setViewerFilename(`invoice_${invoice.invoiceNumber}.pdf`);
+      setViewerOpen(true);
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
+  };
+
   const handleDownloadInvoice = async (invoice: InvoiceWithDetails) => {
     try {
       const company = companies.find((c) => c.id === invoice.companyId);
@@ -260,6 +286,35 @@ export default function InvoiceListPage() {
     }
 
     return await response.blob();
+  };
+
+  const handleViewQuotation = async (quotation: QuotationWithDetails) => {
+    try {
+      const company = companies.find((c) => c.id === quotation.companyId);
+      if (!company) {
+        alert("Company information not found for this quotation.");
+        return;
+      }
+
+      const client = quotation.clientId
+        ? clients.find((c) => c.id === quotation.clientId) || null
+        : null;
+
+      const blob = await generateQuotationPDF(
+        quotation,
+        company,
+        client,
+        quotation.toPartyName,
+        quotation.toPartyAddress
+      );
+      setViewerPdfBlob(blob);
+      setViewerTitle(`Quotation ${quotation.quotationId}`);
+      setViewerFilename(`quotation_${quotation.quotationId}.pdf`);
+      setViewerOpen(true);
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   const handleDownloadQuotation = async (quotation: QuotationWithDetails) => {
@@ -396,6 +451,19 @@ export default function InvoiceListPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
+                  onClick={() => handleViewInvoice(row)}
+                >
+                  <EyeIcon className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>View PDF</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleDownloadInvoice(row)}
                 >
                   <DownloadIcon className="size-4" />
@@ -477,6 +545,19 @@ export default function InvoiceListPage() {
       accessor: (row) => {
         return (
           <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleViewQuotation(row)}
+                >
+                  <EyeIcon className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>View PDF</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -571,6 +652,18 @@ export default function InvoiceListPage() {
           />
         </TabsContent>
       </Tabs>
+      <PDFViewerDialog
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        pdfBlob={viewerPdfBlob}
+        title={viewerTitle}
+        filename={viewerFilename}
+        onDownload={() => {
+          if (viewerPdfBlob && viewerFilename) {
+            downloadPDF(viewerPdfBlob, viewerFilename);
+          }
+        }}
+      />
     </div>
   );
 }
