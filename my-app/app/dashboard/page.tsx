@@ -8,7 +8,8 @@ import { fetchCompanies } from "@/store/thunks/companiesThunks";
 import { fetchItems } from "@/store/thunks/itemsThunks";
 import { fetchInvoices } from "@/store/thunks/invoicesThunks";
 import { fetchDealers } from "@/store/thunks/dealersThunks";
-import { Invoice, DealerPayment } from "@/lib/types";
+import { fetchClients } from "@/store/thunks/clientsThunks";
+import { Invoice, DealerPayment, Client } from "@/lib/types";
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
@@ -16,16 +17,18 @@ export default function DashboardPage() {
   const items = useAppSelector((state) => state.items.items);
   const [invoices, setInvoices] = React.useState<Invoice[]>([]);
   const [dealerPayments, setDealerPayments] = React.useState<DealerPayment[]>([]);
+  const [clients, setClients] = React.useState<Client[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   const fetchData = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const [, , invoicesResult, dealersResult] = await Promise.all([
+      const [, , invoicesResult, dealersResult, clientsResult] = await Promise.all([
         dispatch(fetchCompanies()),
         dispatch(fetchItems()),
         dispatch(fetchInvoices()),
         dispatch(fetchDealers()),
+        dispatch(fetchClients()),
       ]);
       
       if (fetchInvoices.fulfilled.match(invoicesResult)) {
@@ -34,6 +37,10 @@ export default function DashboardPage() {
       
       if (fetchDealers.fulfilled.match(dealersResult)) {
         setDealerPayments(dealersResult.payload);
+      }
+
+      if (fetchClients.fulfilled.match(clientsResult)) {
+        setClients(clientsResult.payload);
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -48,12 +55,12 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-black dark:text-white">
+          <h1 className="text-4xl font-bold text-foreground mb-2">
             Dashboard
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="text-muted-foreground text-base">
             Welcome to your invoice management dashboard. View statistics and
             quick actions below.
           </p>
@@ -66,7 +73,13 @@ export default function DashboardPage() {
           <div className="text-muted-foreground">Loading dashboard data...</div>
         </div>
       ) : (
-        <BentoGrid companies={companies} items={items} invoices={invoices} dealerPayments={dealerPayments} />
+        <BentoGrid 
+          companies={companies} 
+          items={items} 
+          invoices={invoices} 
+          dealerPayments={dealerPayments}
+          clients={clients}
+        />
       )}
     </div>
   );

@@ -159,12 +159,12 @@ function AppSidebarContent() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border">
+      {/* <SidebarFooter className="border-t border-sidebar-border">
         <div className="px-2 py-2 text-xs text-muted-foreground">
           <p className="font-medium">Keyboard Shortcut</p>
           <p className="mt-1">Press Cmd/Ctrl + B to toggle</p>
         </div>
-      </SidebarFooter>
+      </SidebarFooter> */}
     </Sidebar>
   );
 }

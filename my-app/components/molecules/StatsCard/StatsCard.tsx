@@ -16,6 +16,7 @@ interface StatsCardProps {
   value: string | number;
   className?: string;
   valueClassName?: string;
+  onClick?: () => void;
 }
 
 export function StatsCard({
@@ -24,9 +25,17 @@ export function StatsCard({
   value,
   className,
   valueClassName,
+  onClick,
 }: StatsCardProps) {
   return (
-    <Card className={cn("bg-white dark:bg-gray-50 border-gray-200", className)}>
+    <Card 
+      className={cn(
+        "bg-white dark:bg-gray-50 border-gray-200",
+        onClick && "cursor-pointer",
+        className
+      )}
+      onClick={onClick}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-bold text-black dark:text-black">
           {title}
