@@ -21,6 +21,63 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.1",
-    "drizzle-kit": "^0.31.7"
+    "drizzle-kit": "^0.31.7",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.invoicegenerator.app",
+    "productName": "Invoice Generator",
+    "directories": {
+      "output": "../dist",
+      "buildResources": "../build"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!**/*.map",
+      "!**/.*",
+      "!**/*.db-shm",
+      "!**/*.db-wal"
+    ],
+    "extraResources": [
+      {
+        "from": "../my-app/.next/standalone",
+        "to": "app/my-app/.next/standalone",
+        "filter": ["**/*"]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "../build/icon.icns"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "../build/icon.ico"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "../build/icon.png",
+      "category": "Office"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

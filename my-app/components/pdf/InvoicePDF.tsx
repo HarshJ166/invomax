@@ -331,7 +331,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
       const cgstRate = gstRate / 2;
       const sgstRate = gstRate / 2;
 
-      taxDetailsMap.forEach((detail) => {
+      taxDetailsMap.forEach((detail: TaxDetail) => {
         detail.centralTaxRate = cgstRate;
         detail.stateTaxRate = sgstRate;
         detail.centralTaxAmount = (detail.taxableValue * cgstRate) / 100;
@@ -386,7 +386,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
               marginBottom: "5pt",
             }}
           >
-            {company.gstNumber ? "Tax Invoice" : "Estimate/Bill of Supply"}
+            {company.gstNumber ? "Tax Invoice" : "Bill of Supply & Services"}
           </div>
           <div style={styles.detailsGrid}>
             <div style={styles.detailItem}>

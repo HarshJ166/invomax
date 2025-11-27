@@ -64,7 +64,7 @@ const items = sqliteTable("items", {
   hsnCode: text("hsn_code").notNull(),
   qtyAvailable: text("qty_available").notNull(),
   rate: text("rate").notNull(),
-  unit: text("unit", { enum: ["kg", "meter", "piece", "litre", "bundle", "RFT"] }).notNull(),
+  unit: text("unit", { enum: ["kg", "meter", "piece", "litre", "bundle", "RFT","lumsum"] }).notNull(),
   createdAt: text("created_at"),
   updatedAt: text("updated_at"),
 });

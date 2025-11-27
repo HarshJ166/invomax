@@ -228,7 +228,7 @@ export function QuotationForm({ onRefreshRef, editQuotationId }: QuotationFormPr
           );
           if (getQuotationByIdThunk.fulfilled.match(result) && result.payload) {
             const quotation = result.payload;
-            const items = quotation.items ? JSON.parse(quotation.items) : [];
+            const items: QuotationItem[] = quotation.items ? JSON.parse(quotation.items) : [];
 
             setQuotationData({
               companyId: quotation.companyId,
@@ -414,6 +414,7 @@ export function QuotationForm({ onRefreshRef, editQuotationId }: QuotationFormPr
 
   const createQuotationFromFormData = (): Quotation => {
     const quotationId = isEditing && editingQuotationId ? editingQuotationId : generateQuotationId();
+    const now = new Date().toISOString();
     return {
       id: quotationId,
       companyId: quotationData.companyId,
@@ -427,6 +428,8 @@ export function QuotationForm({ onRefreshRef, editQuotationId }: QuotationFormPr
       subtotal: totals.totalAmount,
       totalAmount: totals.totalAmount,
       termsAndConditions: quotationData.termsAndConditions,
+      createdAt: now,
+      updatedAt: now,
     };
   };
 

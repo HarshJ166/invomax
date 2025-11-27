@@ -110,7 +110,7 @@ const createTables = () => {
       hsn_code TEXT NOT NULL,
       qty_available TEXT NOT NULL,
       rate TEXT NOT NULL,
-      unit TEXT NOT NULL CHECK(unit IN ('kg', 'meter', 'piece', 'litre', 'bundle', 'RFT')),
+      unit TEXT NOT NULL CHECK(unit IN ('kg', 'meter', 'piece', 'litre', 'bundle', 'RFT','lumsum')),
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );

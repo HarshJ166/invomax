@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-export type Unit = "kg" | "meter" | "piece" | "litre" | "bundle" | "RFT";
+export type Unit = "kg" | "meter" | "piece" | "litre" | "bundle" | "RFT" | "lumsum";
 
 export interface ItemFormData {
   itemName: string;
@@ -43,7 +43,7 @@ interface ItemDialogProps {
   cancelLabel?: string;
 }
 
-const UNIT_OPTIONS: Unit[] = ["kg", "meter", "piece", "litre", "bundle", "RFT"];
+const UNIT_OPTIONS: Unit[] = ["kg", "meter", "piece", "litre", "bundle", "RFT","lumsum"];
 
 export function ItemDialog({
   open,

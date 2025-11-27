@@ -70,7 +70,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 interface InvoiceItem {
   id: string;
   serialNumber: number;
@@ -238,6 +238,9 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
   const [previewTitle, setPreviewTitle] = React.useState("");
   const [previewFilename, setPreviewFilename] = React.useState("");
   const [pendingSave, setPendingSave] = React.useState(false);
+  const [itemEntryMode, setItemEntryMode] = React.useState<"standard" | "manual">(
+    "standard"
+  );
 
   React.useEffect(() => {
     if (previewPdfBlob) {
@@ -292,7 +295,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           if (getInvoiceByIdThunk.fulfilled.match(result) && result.payload) {
             const invoice = result.payload;
             const notes = invoice.notes ? JSON.parse(invoice.notes) : {};
-            const items = invoice.items ? JSON.parse(invoice.items) : [];
+            const items: InvoiceItem[] = invoice.items ? JSON.parse(invoice.items) : [];
 
             console.log("[InvoiceForm] Invoice loaded for edit:", {
               id: invoice.id,
@@ -305,7 +308,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
             }));
 
             const outOfStockSet = new Set<string>();
-            loadedItems.forEach((item) => {
+            loadedItems.forEach((item: InvoiceItem) => {
               if (item.itemId) {
                 const availability = checkQuantityAvailability(
                   item.itemId,
@@ -755,7 +758,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       const cgstRate = gstRate / 2;
       const sgstRate = gstRate / 2;
 
-      taxDetailsMap.forEach((detail) => {
+      taxDetailsMap.forEach((detail: TaxDetail) => {
         detail.centralTaxRate = cgstRate;
         detail.stateTaxRate = sgstRate;
         detail.centralTaxAmount = (detail.taxableValue * cgstRate) / 100;
@@ -890,6 +893,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
 
   const createInvoiceFromFormData = (): Invoice => {
     const invoiceId = isEditing && editingInvoiceId ? editingInvoiceId : generateInvoiceId();
+    const now = new Date().toISOString();
     return {
       id: invoiceId,
       companyId: invoiceData.companyId,
@@ -912,6 +916,8 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
         declaration: invoiceData.declaration,
       }),
       image: invoiceData.image || null,
+      createdAt: now,
+      updatedAt: now,
     };
   };
 
@@ -1548,7 +1554,20 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
 
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Label className="text-lg font-semibold">Item Details</Label>
+              <div className="flex items-center gap-4">
+                <Label className="text-lg font-semibold">Item Details</Label>
+                <Tabs
+                  value={itemEntryMode}
+                  onValueChange={(value) =>
+                    setItemEntryMode(value as "standard" | "manual")
+                  }
+                >
+                  <TabsList>
+                    <TabsTrigger value="standard">Items List</TabsTrigger>
+                    <TabsTrigger value="manual">Manual</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={addItemRow}>
                   <PlusIcon className="size-4 mr-2" />
@@ -1594,66 +1613,72 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                         className={isOutOfStock ? "bg-destructive/10" : ""}
                       >
                         <td className="border p-2">
-                        <Input
-                          type="number"
-                          value={item.serialNumber}
-                          readOnly
-                          className="w-16"
-                        />
-                      </td>
-                      <td className="border p-2">
-                        <div className="flex gap-2">
-                          <Select
-                            value={item.itemId}
-                            onValueChange={(value) =>
-                              handleItemSelect(index, value)
+                          <Input
+                            type="number"
+                            value={item.serialNumber}
+                            readOnly
+                            className="w-16"
+                          />
+                        </td>
+                        <td className="border p-2">
+                          {itemEntryMode === "standard" && (
+                            <div className="flex gap-2">
+                              <Select
+                                value={item.itemId}
+                                onValueChange={(value) =>
+                                  handleItemSelect(index, value)
+                                }
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Select Item" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {items.map((it) => (
+                                    <SelectItem key={it.id} value={it.id}>
+                                      {it.itemName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => {
+                                  setEditingItemIndex(index);
+                                  setItemFormData(initialItemData);
+                                  setItemDialogOpen(true);
+                                }}
+                              >
+                                <PlusIcon className="size-4" />
+                              </Button>
+                            </div>
+                          )}
+                          <Input
+                            className={itemEntryMode === "standard" ? "mt-2" : ""}
+                            value={item.description}
+                            onChange={(e) =>
+                              handleItemChange(
+                                index,
+                                "description",
+                                e.target.value
+                              )
                             }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select Item" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {items.map((it) => (
-                                <SelectItem key={it.id} value={it.id}>
-                                  {it.itemName}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => {
-                              setEditingItemIndex(index);
-                              setItemFormData(initialItemData);
-                              setItemDialogOpen(true);
-                            }}
-                          >
-                            <PlusIcon className="size-4" />
-                          </Button>
-                        </div>
-                        <Input
-                          className="mt-2"
-                          value={item.description}
-                          onChange={(e) =>
-                            handleItemChange(
-                              index,
-                              "description",
-                              e.target.value
-                            )
-                          }
-                          placeholder="Description"
-                        />
-                        <Input
-                          className="mt-2"
-                          value={item.batch || ""}
-                          onChange={(e) =>
-                            handleItemChange(index, "batch", e.target.value)
-                          }
-                          placeholder="Batch (optional)"
-                        />
-                      </td>
+                            placeholder={
+                              itemEntryMode === "standard"
+                                ? "Description"
+                                : "Item name and description"
+                            }
+                          />
+                          <Input
+                            className="mt-2"
+                            value={item.batch || ""}
+                            onChange={(e) =>
+                              handleItemChange(index, "batch", e.target.value)
+                            }
+                            placeholder="Batch (optional)"
+                          />
+                        </td>
                       <td className="border p-2">
                         <Input
                           value={item.hsnCode}

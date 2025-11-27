@@ -38,8 +38,8 @@ export const createPurchaseThunk = createAsyncThunk(
       }
 
       // Fetch all purchases again to sync state correctly since backend might create multiple records
-      dispatch(fetchPurchases());
-      return result.data;
+      await dispatch(fetchPurchases());
+      return purchase;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create purchase";
