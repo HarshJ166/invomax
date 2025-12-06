@@ -147,43 +147,43 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "2pt",
   },
   colDesc: {
-    width: "40%",
+    width: "50%",
     textAlign: "left",
     borderRight: "1pt solid #000",
     height: "100%",
     padding: "2pt",
   },
   colHsn: {
-    width: "10%",
-    textAlign: "center",
-    borderRight: "1pt solid #000",
-    height: "100%",
-    padding: "2pt",
-  },
-  colQty: {
-    width: "10%",
-    textAlign: "center",
-    borderRight: "1pt solid #000",
-    height: "100%",
-    padding: "2pt",
-  },
-  colRate: {
-    width: "12%",
-    textAlign: "right",
-    borderRight: "1pt solid #000",
-    height: "100%",
-    padding: "2pt",
-  },
-  colPer: {
     width: "8%",
     textAlign: "center",
     borderRight: "1pt solid #000",
     height: "100%",
     padding: "2pt",
   },
+  colQty: {
+    width: "9%",
+    textAlign: "center",
+    borderRight: "1pt solid #000",
+    height: "100%",
+    padding: "2pt",
+  },
+  colRate: {
+    width: "9%",
+    textAlign: "center",
+    borderRight: "1pt solid #000",
+    height: "100%",
+    padding: "2pt",
+  },
+  colPer: {
+    width: "9%",
+    textAlign: "center",
+    borderRight: "1pt solid #000",
+    height: "100%",
+    padding: "2pt",
+  },
   colAmount: {
-    width: "15%",
-    textAlign: "right",
+    width: "18%",
+    textAlign: "center",
     height: "100%",
     padding: "2pt",
   },
@@ -345,17 +345,22 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
 
   const taxDetails = calculateTaxDetails();
 
-  const ITEMS_PER_PAGE_1 = 7;
-  const ITEMS_PER_PAGE_REST = 15;
+  // Previously, items were split across pages with a limit of 7 items on the first page
+  // and 15 items on subsequent pages. This pagination is now disabled so that all items
+  // render on a single page.
+  // const ITEMS_PER_PAGE_1 = 7;
+  // const ITEMS_PER_PAGE_REST = 15;
+  //
+  // const pages: InvoiceItem[][] = [];
+  // pages.push(items.slice(0, ITEMS_PER_PAGE_1));
+  //
+  // let remaining = items.slice(ITEMS_PER_PAGE_1);
+  // while (remaining.length > 0) {
+  //   pages.push(remaining.slice(0, ITEMS_PER_PAGE_REST));
+  //   remaining = remaining.slice(ITEMS_PER_PAGE_REST);
+  // }
 
-  const pages = [];
-  pages.push(items.slice(0, ITEMS_PER_PAGE_1));
-
-  let remaining = items.slice(ITEMS_PER_PAGE_1);
-  while (remaining.length > 0) {
-    pages.push(remaining.slice(0, ITEMS_PER_PAGE_REST));
-    remaining = remaining.slice(ITEMS_PER_PAGE_REST);
-  }
+  const pages: InvoiceItem[][] = [items];
 
   const InvoiceHeader = () => {
     const logoUrl =
@@ -471,14 +476,21 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
     </div>
   );
 
+  const showHsnColumn = items.some(
+    (item) => typeof item.hsnCode === "string" && item.hsnCode.trim() !== ""
+  );
+  const showPerColumn = items.some(
+    (item) => typeof item.unit === "string" && item.unit.trim() !== ""
+  );
+
   const TableHeader = () => (
     <div style={styles.tableHeader}>
       <div style={styles.colSn}>S.No</div>
       <div style={styles.colDesc}>Description of Goods</div>
-      <div style={styles.colHsn}>HSN/SAC</div>
+      {showHsnColumn && <div style={styles.colHsn}>HSN/SAC</div>}
       <div style={styles.colQty}>Quantity</div>
       <div style={styles.colRate}>Rate</div>
-      <div style={styles.colPer}>Per</div>
+      {showPerColumn && <div style={styles.colPer}>Per</div>}
       <div style={styles.colAmount}>Amount</div>
     </div>
   );
@@ -506,10 +518,14 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
                       </div>
                     )}
                   </div>
-                  <div style={styles.colHsn}>{item.hsnCode}</div>
+                  {showHsnColumn && (
+                    <div style={styles.colHsn}>{item.hsnCode || "-"}</div>
+                  )}
                   <div style={styles.colQty}>{item.quantity}</div>
                   <div style={styles.colRate}>{item.rate.toFixed(2)}</div>
-                  <div style={styles.colPer}>{item.unit}</div>
+                  {showPerColumn && (
+                    <div style={styles.colPer}>{item.unit || "-"}</div>
+                  )}
                   <div style={styles.colAmount}>{item.amount.toFixed(2)}</div>
                 </div>
               ))}
@@ -537,12 +553,20 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
                   >
                     Total
                   </div>
-                  <div style={{ ...styles.colHsn, borderRight: "none" }}></div>
+                  {showHsnColumn && (
+                    <div
+                      style={{ ...styles.colHsn, borderRight: "none" }}
+                    ></div>
+                  )}
                   <div style={styles.colQty}>
                     {items.reduce((acc, i) => acc + i.quantity, 0)}
                   </div>
                   <div style={{ ...styles.colRate, borderRight: "none" }}></div>
-                  <div style={{ ...styles.colPer, borderRight: "none" }}></div>
+                  {showPerColumn && (
+                    <div
+                      style={{ ...styles.colPer, borderRight: "none" }}
+                    ></div>
+                  )}
                   <div style={styles.colAmount}>
                     {invoice.subtotal.toFixed(2)}
                   </div>

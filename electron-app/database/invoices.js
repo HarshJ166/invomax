@@ -1,5 +1,5 @@
 const { getDatabase, schema } = require("./db");
-const { eq, desc } = require("drizzle-orm");
+const { eq, desc, and, ne } = require("drizzle-orm");
 const { invoices: invoicesTable } = schema;
 const itemsDb = require("./items");
 
@@ -135,6 +135,25 @@ const createInvoice = (invoice) => {
 
 const updateInvoice = (id, invoice) => {
   const db = getDatabase();
+
+  // Guard against duplicate invoice numbers before hitting the UNIQUE constraint.
+  const conflictingInvoice = db
+    .select()
+    .from(invoicesTable)
+    .where(
+      and(
+        eq(invoicesTable.invoiceNumber, invoice.invoiceNumber),
+        ne(invoicesTable.id, id)
+      )
+    )
+    .get();
+
+  if (conflictingInvoice) {
+    throw new Error(
+      `Invoice number "${invoice.invoiceNumber}" is already in use by another invoice.`
+    );
+  }
+
   db.update(invoicesTable)
     .set({
       companyId: invoice.companyId,

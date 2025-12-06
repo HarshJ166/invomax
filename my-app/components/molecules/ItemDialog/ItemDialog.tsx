@@ -112,15 +112,12 @@ export function ItemDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="hsnCode">
-                HSN Code <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="hsnCode">HSN Code</Label>
               <Input
                 id="hsnCode"
                 value={itemData.hsnCode}
                 onChange={(e) => handleFieldChange("hsnCode", e.target.value)}
                 placeholder="Enter HSN code"
-                required
               />
             </div>
 
@@ -161,15 +158,12 @@ export function ItemDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="unit">
-                Unit <span className="text-destructive">*</span>
-              </Label>
+              <Label htmlFor="unit">Unit</Label>
               <Select
                 value={itemData.unit}
                 onValueChange={(value) =>
                   handleFieldChange("unit", value as Unit)
                 }
-                required
               >
                 <SelectTrigger id="unit" className="w-full">
                   <SelectValue placeholder="Select unit" />

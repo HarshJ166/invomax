@@ -241,6 +241,8 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
   const [itemEntryMode, setItemEntryMode] = React.useState<"standard" | "manual">(
     "standard"
   );
+  const [invoiceNumberManuallyEdited, setInvoiceNumberManuallyEdited] =
+    React.useState(false);
 
   React.useEffect(() => {
     if (previewPdfBlob) {
@@ -336,6 +338,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
               declaration: notes.declaration || initialInvoiceData.declaration,
               image: invoice.image || null,
             });
+            setInvoiceNumberManuallyEdited(true);
             setIsEditing(true);
             setEditingInvoiceId(invoice.id);
             console.log("[InvoiceForm] Editing state set:", {
@@ -350,6 +353,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
         }
       } else {
         console.log("[InvoiceForm] No editInvoiceId, resetting editing state");
+        setInvoiceNumberManuallyEdited(false);
         setIsEditing(false);
         setEditingInvoiceId(null);
       }
@@ -364,86 +368,11 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     }
   }, [loadData, onRefreshRef]);
 
-  React.useEffect(() => {
-    const fetchLastInvoiceAndSetCompany = async () => {
-      if (invoiceData.companyId) {
-        const company = companies.find((c) => c.id === invoiceData.companyId);
-        setSelectedCompany(company || null);
-        if (company) {
-          if (company.gstNumber) {
-            setInvoiceData((prev) => ({ ...prev, gstSlab: "18" }));
-          } else {
-            setInvoiceData((prev) => ({ ...prev, gstSlab: "" }));
-          }
+  const assignAutoInvoiceNumber = React.useCallback((value: string) => {
+    setInvoiceData((prev) => ({ ...prev, invoiceNumber: value }));
+    setInvoiceNumberManuallyEdited(false);
+  }, []);
 
-          if (company.invoiceNumberInitial && invoiceData.invoiceDate) {
-            const lastInvoiceResult = await dispatch(
-              getLastInvoiceByCompanyIdThunk({ companyId: company.id })
-            );
-            let nextInvoiceCount = company.invoiceCount;
-
-            if (
-              getLastInvoiceByCompanyIdThunk.fulfilled.match(
-                lastInvoiceResult
-              ) &&
-              lastInvoiceResult.payload
-            ) {
-              const lastInvoice = lastInvoiceResult.payload;
-              const invoiceNumberParts = lastInvoice.invoiceNumber.split("/");
-              if (invoiceNumberParts.length === 3) {
-                const lastCount = parseInt(invoiceNumberParts[1], 10);
-                if (!isNaN(lastCount)) {
-                  nextInvoiceCount = lastCount;
-                }
-              }
-            }
-
-            const invoiceDate = new Date(invoiceData.invoiceDate);
-            const year = invoiceDate.getFullYear();
-            const nextYear = String(year + 1).slice(-2);
-            const currentYear = String(year).slice(-2);
-            const nextInvoiceNumber = `${company.invoiceNumberInitial}/${String(
-              nextInvoiceCount + 1
-            ).padStart(2, "0")}/${currentYear}-${nextYear}`;
-            setInvoiceData((prev) => ({
-              ...prev,
-              invoiceNumber: nextInvoiceNumber,
-            }));
-          }
-        }
-      } else {
-        setSelectedCompany(null);
-      }
-    };
-
-    fetchLastInvoiceAndSetCompany();
-  }, [invoiceData.companyId, companies, invoiceData.invoiceDate, dispatch]);
-
-  React.useEffect(() => {
-    if (
-      selectedCompany &&
-      selectedCompany.invoiceNumberInitial &&
-      invoiceData.invoiceDate &&
-      invoiceData.invoiceNumber
-    ) {
-      const invoiceDate = new Date(invoiceData.invoiceDate);
-      const year = invoiceDate.getFullYear();
-      const nextYear = String(year + 1).slice(-2);
-      const currentYear = String(year).slice(-2);
-      const invoiceNumberParts = invoiceData.invoiceNumber.split("/");
-
-      if (invoiceNumberParts.length === 3) {
-        const countPart = invoiceNumberParts[1];
-        const newInvoiceNumber = `${selectedCompany.invoiceNumberInitial}/${countPart}/${currentYear}-${nextYear}`;
-        if (newInvoiceNumber !== invoiceData.invoiceNumber) {
-          setInvoiceData((prev) => ({
-            ...prev,
-            invoiceNumber: newInvoiceNumber,
-          }));
-        }
-      }
-    }
-  }, [invoiceData.invoiceDate, selectedCompany, invoiceData.invoiceNumber]);
 
   React.useEffect(() => {
     if (invoiceData.clientId) {
@@ -458,6 +387,9 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     field: K,
     value: InvoiceFormData[K]
   ) => {
+    if (field === "invoiceNumber") {
+      setInvoiceNumberManuallyEdited(true);
+    }
     setInvoiceData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -833,6 +765,14 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     return `invoice-${timestamp}-${random}`;
   }, []);
 
+  const parseInvoiceSequence = (invoiceNumber: string) => {
+    const parts = invoiceNumber.split("/");
+    if (parts.length !== 3) return null;
+    const sequence = parseInt(parts[1], 10);
+    if (Number.isNaN(sequence)) return null;
+    return { sequence, suffix: parts[2] };
+  };
+
   const generateUniqueInvoiceNumber = React.useCallback(
     async (companyId: string, invoiceDate: string): Promise<string> => {
       const company = companies.find((c) => c.id === companyId);
@@ -840,56 +780,92 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
         return `INV-${Date.now()}`;
       }
 
-      const lastInvoiceResult = await dispatch(
-        getLastInvoiceByCompanyIdThunk({ companyId })
-      );
-      let nextInvoiceCount = company.invoiceCount;
-
-      if (
-        getLastInvoiceByCompanyIdThunk.fulfilled.match(lastInvoiceResult) &&
-        lastInvoiceResult.payload
-      ) {
-        const lastInvoice = lastInvoiceResult.payload;
-        const invoiceNumberParts = lastInvoice.invoiceNumber.split("/");
-        if (invoiceNumberParts.length === 3) {
-          const lastCount = parseInt(invoiceNumberParts[1], 10);
-          if (!isNaN(lastCount)) {
-            nextInvoiceCount = lastCount;
-          }
-        }
+      const invoiceDateObj = new Date(invoiceDate);
+      if (Number.isNaN(invoiceDateObj.getTime())) {
+        return `INV-${Date.now()}`;
       }
 
-      const invoiceDateObj = new Date(invoiceDate);
-      const year = invoiceDateObj.getFullYear();
-      const nextYear = String(year + 1).slice(-2);
-      const currentYear = String(year).slice(-2);
+      const currentYear = String(invoiceDateObj.getFullYear()).slice(-2);
+      const nextYear = String(invoiceDateObj.getFullYear() + 1).slice(-2);
+      const fiscalSuffix = `${currentYear}-${nextYear}`;
 
-      let attemptCount = 0;
-      let invoiceNumber = "";
       const invoicesResult = await dispatch(fetchInvoices());
       const existingInvoiceNumbers = new Set<string>();
+      let highestSequence = company.invoiceCount || 0;
 
       if (fetchInvoices.fulfilled.match(invoicesResult)) {
-        invoicesResult.payload.forEach((inv) => {
-          existingInvoiceNumbers.add(inv.invoiceNumber);
-        });
+          invoicesResult.payload
+            .filter((inv) => inv.companyId === companyId)
+            .forEach((inv) => {
+              existingInvoiceNumbers.add(inv.invoiceNumber);
+              const parsed = parseInvoiceSequence(inv.invoiceNumber);
+              if (parsed && parsed.suffix === fiscalSuffix) {
+                highestSequence = Math.max(highestSequence, parsed.sequence);
+              }
+            });
       }
 
+      let attemptCount = 0;
+      let nextSequence = highestSequence;
+      let invoiceNumber = "";
+
       do {
-        nextInvoiceCount += 1;
+        nextSequence += 1;
         invoiceNumber = `${company.invoiceNumberInitial}/${String(
-          nextInvoiceCount
-        ).padStart(2, "0")}/${currentYear}-${nextYear}`;
+          nextSequence
+        ).padStart(2, "0")}/${fiscalSuffix}`;
         attemptCount += 1;
-      } while (
-        existingInvoiceNumbers.has(invoiceNumber) &&
-        attemptCount < 1000
-      );
+      } while (existingInvoiceNumbers.has(invoiceNumber) && attemptCount < 1000);
 
       return invoiceNumber;
     },
     [companies, dispatch]
   );
+
+  React.useEffect(() => {
+    const updateCompanySelectionAndDefaults = async () => {
+      if (!invoiceData.companyId) {
+        setSelectedCompany(null);
+        return;
+      }
+
+      const company = companies.find((c) => c.id === invoiceData.companyId) || null;
+      setSelectedCompany(company);
+
+      if (!company) {
+        return;
+      }
+
+      if (company.gstNumber) {
+        setInvoiceData((prev) => ({ ...prev, gstSlab: "18" }));
+      } else {
+        setInvoiceData((prev) => ({ ...prev, gstSlab: "" }));
+      }
+
+      if (
+        !isEditing &&
+        !invoiceNumberManuallyEdited &&
+        company.invoiceNumberInitial &&
+        invoiceData.invoiceDate
+      ) {
+        const suggestedNumber = await generateUniqueInvoiceNumber(
+          company.id,
+          invoiceData.invoiceDate
+        );
+        assignAutoInvoiceNumber(suggestedNumber);
+      }
+    };
+
+    updateCompanySelectionAndDefaults();
+  }, [
+    invoiceData.companyId,
+    invoiceData.invoiceDate,
+    companies,
+    isEditing,
+    invoiceNumberManuallyEdited,
+    generateUniqueInvoiceNumber,
+    assignAutoInvoiceNumber,
+  ]);
 
   const createInvoiceFromFormData = (): Invoice => {
     const invoiceId = isEditing && editingInvoiceId ? editingInvoiceId : generateInvoiceId();
@@ -953,6 +929,18 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     }
   };
 
+  const ensureInvoiceNumber = async (): Promise<string> => {
+    if (invoiceData.invoiceNumber.trim()) {
+      return invoiceData.invoiceNumber.trim();
+    }
+    const generated = await generateUniqueInvoiceNumber(
+      invoiceData.companyId,
+      invoiceData.invoiceDate
+    );
+    assignAutoInvoiceNumber(generated);
+    return generated;
+  };
+
   const handleSave = async (skipReset = false): Promise<Invoice | null> => {
     if (isEditing && editingInvoiceId) {
       console.log(
@@ -984,12 +972,8 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       return null;
     }
 
-    console.log("[InvoiceForm] Generating unique invoice number...");
-    const uniqueInvoiceNumber = await generateUniqueInvoiceNumber(
-      invoiceData.companyId,
-      invoiceData.invoiceDate
-    );
-    console.log("[InvoiceForm] Generated invoice number:", uniqueInvoiceNumber);
+    const uniqueInvoiceNumber = await ensureInvoiceNumber();
+    console.log("[InvoiceForm] Using invoice number:", uniqueInvoiceNumber);
 
     const invoiceId = generateInvoiceId();
     console.log("[InvoiceForm] Generated invoice ID:", invoiceId);
@@ -1026,7 +1010,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     });
 
     console.log("[InvoiceForm] Dispatching createInvoiceThunk...");
-    let result = await dispatch(
+    const result = await dispatch(
       createInvoiceThunk({
         invoice: {
           id: invoiceId,
@@ -1051,55 +1035,6 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       rejected: createInvoiceThunk.rejected.match(result),
       error: createInvoiceThunk.rejected.match(result) ? result.error : null,
     });
-    let finalInvoiceNumber = uniqueInvoiceNumber;
-    let retryCount = 0;
-    const maxRetries = 5;
-
-    while (
-      !createInvoiceThunk.fulfilled.match(result) &&
-      retryCount < maxRetries
-    ) {
-      const errorMessage = createInvoiceThunk.rejected.match(result)
-        ? (result.error as string) || ""
-        : "";
-      if (
-        errorMessage.includes("UNIQUE constraint") ||
-        errorMessage.includes("invoice_number")
-      ) {
-        retryCount += 1;
-        finalInvoiceNumber = await generateUniqueInvoiceNumber(
-          invoiceData.companyId,
-          invoiceData.invoiceDate
-        );
-        invoicePayload.invoiceNumber = finalInvoiceNumber;
-        invoicePayload.notes = JSON.stringify({
-          ...JSON.parse(invoicePayload.notes as string),
-          buyerOrderNumber: finalInvoiceNumber,
-        });
-        result = await dispatch(
-          createInvoiceThunk({
-            invoice: {
-              id: invoiceId,
-              companyId: invoicePayload.companyId,
-              clientId: invoicePayload.clientId,
-              invoiceNumber: invoicePayload.invoiceNumber,
-              invoiceDate: invoicePayload.invoiceDate,
-              dueDate: null,
-              items: invoicePayload.items,
-              subtotal: invoicePayload.subtotal,
-              taxAmount: invoicePayload.taxAmount,
-              totalAmount: invoicePayload.totalAmount,
-              status: invoicePayload.status,
-              notes: invoicePayload.notes,
-              image: invoicePayload.image,
-            },
-          })
-        );
-      } else {
-        break;
-      }
-    }
-
     if (createInvoiceThunk.fulfilled.match(result)) {
       console.log(
         "[InvoiceForm] Invoice created successfully! Invoice:",
@@ -1107,7 +1042,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       );
       console.log("[InvoiceForm] Updating company invoice count...");
 
-      const invoiceNumberParts = finalInvoiceNumber.split("/");
+      const invoiceNumberParts = uniqueInvoiceNumber.split("/");
       let newInvoiceCount = selectedCompany.invoiceCount;
       if (invoiceNumberParts.length === 3) {
         const count = parseInt(invoiceNumberParts[1], 10);
@@ -1154,6 +1089,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       if (!skipReset) {
         alert("Invoice saved successfully!");
         setInvoiceData(initialInvoiceData);
+        setInvoiceNumberManuallyEdited(false);
         setOutOfStockItems(new Set());
         setConsentGivenItems(new Set());
         setPendingConsentItem(null);
@@ -1165,7 +1101,19 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       return result.payload;
     } else {
       console.error("[InvoiceForm] Invoice creation failed:", result);
-      alert("Failed to save invoice. Please try again.");
+      const errorMessage = createInvoiceThunk.rejected.match(result)
+        ? (result.error as string) || "Failed to save invoice"
+        : "Failed to save invoice";
+      if (
+        errorMessage.toLowerCase().includes("unique") ||
+        errorMessage.toLowerCase().includes("invoice number")
+      ) {
+        alert(
+          "Invoice number already exists. Please choose a different invoice number."
+        );
+      } else {
+        alert("Failed to save invoice. Please try again.");
+      }
       return null;
     }
   };
@@ -1208,7 +1156,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           invoice: {
             companyId: invoiceData.companyId,
             clientId: invoiceData.clientId,
-            invoiceNumber: invoiceData.invoiceNumber,
+            invoiceNumber: invoiceData.invoiceNumber.trim(),
             invoiceDate: invoiceData.invoiceDate,
             dueDate: null,
             items: JSON.stringify(invoiceData.items),
@@ -1245,6 +1193,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           alert("Invoice updated successfully!");
           setInvoiceData(initialInvoiceData);
           setIsEditing(false);
+          setInvoiceNumberManuallyEdited(false);
           setEditingInvoiceId(null);
           setOutOfStockItems(new Set());
           setConsentGivenItems(new Set());
@@ -1330,6 +1279,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
           : "Invoice saved and downloaded successfully!"
       );
       setInvoiceData(initialInvoiceData);
+      setInvoiceNumberManuallyEdited(false);
       setIsEditing(false);
       setEditingInvoiceId(null);
       setOutOfStockItems(new Set());
@@ -1481,10 +1431,8 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                     onChange={(e) =>
                       handleFieldChange("invoiceNumber", e.target.value)
                     }
-                    placeholder="Invoice Number (Auto-generated)"
-                    required
-                    readOnly
-                    className="bg-muted"
+                placeholder="Invoice Number"
+                required
                   />
                 </div>
                 <div className="grid gap-2">
