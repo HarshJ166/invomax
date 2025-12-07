@@ -46,10 +46,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "30pt",
     display: "flex",
     flexDirection: "column",
-    width: "100%", // Content fills the PDF margin area
-    height: "100%",
+    width: "100%",
+    minHeight: "100%", // Changed to minHeight to allow growth
     boxSizing: "border-box",
-    pageBreakAfter: "always",
     position: "relative",
   },
   headerContainer: {
@@ -58,7 +57,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderBottom: "1pt solid #000",
     paddingBottom: "5pt",
     marginBottom: "5pt",
-    minHeight: "120pt",
+    // minHeight removed to reduce whitespace
   },
   companySection: {
     width: "50%",
@@ -120,7 +119,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   tableContainer: {
     marginTop: "10pt",
     border: "1pt solid #000",
-    borderBottom: "none", // Rows have bottom borders
+    // borderBottom: "none" removed effectively by creating a full border wrapper
   },
   tableHeader: {
     display: "flex",
@@ -138,7 +137,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     minHeight: "20pt",
     alignItems: "center",
   },
-  // Columns
+  // Columns - Adjusted to sum to 100% roughly
   colSn: {
     width: "5%",
     textAlign: "center",
@@ -147,42 +146,42 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "2pt",
   },
   colDesc: {
-    width: "50%",
+    flex: 1, // Use flex to fill remaining space
     textAlign: "left",
     borderRight: "1pt solid #000",
     height: "100%",
     padding: "2pt",
   },
   colHsn: {
-    width: "8%",
+    width: "10%",
     textAlign: "center",
     borderRight: "1pt solid #000",
     height: "100%",
     padding: "2pt",
   },
   colQty: {
-    width: "9%",
+    width: "8%",
     textAlign: "center",
     borderRight: "1pt solid #000",
     height: "100%",
     padding: "2pt",
   },
   colRate: {
-    width: "9%",
+    width: "12%",
     textAlign: "center",
     borderRight: "1pt solid #000",
     height: "100%",
     padding: "2pt",
   },
   colPer: {
-    width: "9%",
+    width: "8%",
     textAlign: "center",
     borderRight: "1pt solid #000",
     height: "100%",
     padding: "2pt",
   },
   colAmount: {
-    width: "18%",
+    width: "15%",
     textAlign: "center",
     height: "100%",
     padding: "2pt",
@@ -212,7 +211,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   taxCol: {
     borderRight: "1pt solid #000",
     padding: "2pt",
-    textAlign: "right",
+    textAlign: "center", // Changed to center
   },
   taxTableRow: {
     display: "flex",
@@ -229,6 +228,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     minHeight: "25pt",
     alignItems: "center",
     fontWeight: "bold",
+    textAlign: "center", // Added center
   },
   declarationSection: {
     display: "flex",
@@ -254,7 +254,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     objectFit: "contain",
   },
   bankDetailsSection: {
-    padding: "3pt 5pt",
+    padding: "5pt",
     borderTop: "1pt solid #000",
     borderBottom: "1pt solid #000",
     fontSize: "8pt",
@@ -262,16 +262,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   bankDetailsTitle: {
     fontSize: "9pt",
     fontWeight: "bold",
-    marginBottom: "2pt",
+    marginBottom: "4pt",
   },
   bankDetailsRow: {
     display: "flex",
     flexDirection: "row",
-    marginBottom: "1pt",
+    marginBottom: "2pt",
+    alignItems: "center",
   },
   bankDetailsLabel: {
     fontWeight: "bold",
-    width: "80pt",
+    width: "100pt", // Increased width for better sync
   },
   bankDetailsValue: {
     flex: 1,
@@ -571,6 +572,119 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
                     {invoice.subtotal.toFixed(2)}
                   </div>
                 </div>
+
+                {company.gstNumber && notes.gstSlab && notes.gstSlab !== "" && (
+                  <>
+                    <div style={styles.totalRow}>
+                      <div
+                        style={{ ...styles.colSn, borderRight: "none" }}
+                      ></div>
+                      <div
+                        style={{
+                          ...styles.colDesc,
+                          borderRight: "none",
+                          textAlign: "right",
+                          paddingRight: "5pt",
+                        }}
+                      >
+                        Output CGST
+                      </div>
+                      {showHsnColumn && (
+                        <div
+                          style={{ ...styles.colHsn, borderRight: "none" }}
+                        ></div>
+                      )}
+                      <div
+                        style={{ ...styles.colQty, borderRight: "none" }}
+                      ></div>
+                      <div
+                        style={{ ...styles.colRate, borderRight: "none" }}
+                      ></div>
+                      {showPerColumn && (
+                        <div
+                          style={{ ...styles.colPer, borderRight: "none" }}
+                        ></div>
+                      )}
+                      <div style={styles.colAmount}>
+                        {(invoice.taxAmount / 2).toFixed(2)}
+                      </div>
+                    </div>
+                    <div style={styles.totalRow}>
+                      <div
+                        style={{ ...styles.colSn, borderRight: "none" }}
+                      ></div>
+                      <div
+                        style={{
+                          ...styles.colDesc,
+                          borderRight: "none",
+                          textAlign: "right",
+                          paddingRight: "5pt",
+                        }}
+                      >
+                        Output SGST
+                      </div>
+                      {showHsnColumn && (
+                        <div
+                          style={{ ...styles.colHsn, borderRight: "none" }}
+                        ></div>
+                      )}
+                      <div
+                        style={{ ...styles.colQty, borderRight: "none" }}
+                      ></div>
+                      <div
+                        style={{ ...styles.colRate, borderRight: "none" }}
+                      ></div>
+                      {showPerColumn && (
+                        <div
+                          style={{ ...styles.colPer, borderRight: "none" }}
+                        ></div>
+                      )}
+                      <div style={styles.colAmount}>
+                        {(invoice.taxAmount / 2).toFixed(2)}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        ...styles.totalRow,
+                        fontWeight: "bold",
+                        backgroundColor: "#f0f0f0",
+                      }}
+                    >
+                      <div
+                        style={{ ...styles.colSn, borderRight: "none" }}
+                      ></div>
+                      <div
+                        style={{
+                          ...styles.colDesc,
+                          borderRight: "none",
+                          textAlign: "right",
+                          paddingRight: "5pt",
+                        }}
+                      >
+                        Grand Total
+                      </div>
+                      {showHsnColumn && (
+                        <div
+                          style={{ ...styles.colHsn, borderRight: "none" }}
+                        ></div>
+                      )}
+                      <div
+                        style={{ ...styles.colQty, borderRight: "none" }}
+                      ></div>
+                      <div
+                        style={{ ...styles.colRate, borderRight: "none" }}
+                      ></div>
+                      {showPerColumn && (
+                        <div
+                          style={{ ...styles.colPer, borderRight: "none" }}
+                        ></div>
+                      )}
+                      <div style={styles.colAmount}>
+                        {invoice.totalAmount.toFixed(2)}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {company.gstNumber &&
                   notes.gstSlab &&

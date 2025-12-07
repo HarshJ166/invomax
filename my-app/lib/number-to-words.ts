@@ -56,9 +56,9 @@ const convertHundreds = (num: number): string => {
   return result;
 };
 
-export const numberToWords = (num: number): string => {
+const convertToWordsRecursive = (num: number): string => {
   if (num === 0) return "Zero";
-  if (num < 0) return "Minus " + numberToWords(-num);
+  if (num < 0) return "Minus " + convertToWordsRecursive(-num);
 
   let result = "";
   const numStr = num.toFixed(2);
@@ -71,21 +71,21 @@ export const numberToWords = (num: number): string => {
     result += convertHundreds(crores) + "Crore ";
     const remainder = integerPart % 10000000;
     if (remainder > 0) {
-      result += numberToWords(remainder).replace("Zero ", "");
+      result += convertToWordsRecursive(remainder).replace("Zero ", "");
     }
   } else if (integerPart >= 100000) {
     const lakhs = Math.floor(integerPart / 100000);
     result += convertHundreds(lakhs) + "Lakh ";
     const remainder = integerPart % 100000;
     if (remainder > 0) {
-      result += numberToWords(remainder).replace("Zero ", "");
+      result += convertToWordsRecursive(remainder).replace("Zero ", "");
     }
   } else if (integerPart >= 1000) {
     const thousands = Math.floor(integerPart / 1000);
     result += convertHundreds(thousands) + "Thousand ";
     const remainder = integerPart % 1000;
     if (remainder > 0) {
-      result += numberToWords(remainder).replace("Zero ", "");
+      result += convertToWordsRecursive(remainder).replace("Zero ", "");
     }
   } else {
     result += convertHundreds(integerPart);
@@ -98,6 +98,10 @@ export const numberToWords = (num: number): string => {
     result += " and " + convertHundreds(decimalPart).trim() + " Paise";
   }
 
-  return result + " Only";
+  return result;
+};
+
+export const numberToWords = (num: number): string => {
+  return convertToWordsRecursive(num) + " Only";
 };
 
