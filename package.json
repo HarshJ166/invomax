@@ -12,7 +12,9 @@
     "dist:mac": "yarn build && cd electron-app && electron-builder --mac",
     "dist:win": "yarn build && cd electron-app && electron-builder --win",
     "dist:linux": "yarn build && cd electron-app && electron-builder --linux",
-    "postinstall": "cd electron-app && yarn install && cd ../my-app && yarn install"
+    "postinstall": "cd electron-app && yarn install && cd ../my-app && yarn install",
+    "logs": "node scripts/view-logs.js",
+    "logs:monitor": "node scripts/monitor-logs.js"
   }
 }
 
