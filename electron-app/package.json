@@ -8,7 +8,6 @@
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
-    "electron": "33.0.0",
     "uuid": "^9.0.1",
     "wait-port": "^1.1.0"
   },
@@ -16,12 +15,19 @@
     "dev:next": "cd ../my-app && yarn dev",
     "dev:electron": "wait-port 3000 && electron .",
     "dev": "concurrently -k -n next,electron \"yarn dev:next\" \"yarn dev:electron\"",
+    "build:next": "cd ../my-app && yarn build",
+    "build:win": "electron-builder --win --x64",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "build:all": "yarn build:next && yarn build:win",
+    "build:all-platforms": "yarn build:next && electron-builder -mwl",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "postinstall": "electron-rebuild -f -w better-sqlite3"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.1",
     "drizzle-kit": "^0.31.7",
+    "electron": "33.0.0",
     "electron-builder": "^25.1.8"
   },
   "build": {
@@ -32,18 +38,28 @@
       "buildResources": "../build"
     },
     "files": [
-      "**/*",
-      "!node_modules/**/*",
-      "!**/*.map",
-      "!**/.*",
-      "!**/*.db-shm",
-      "!**/*.db-wal"
+      "main.js",
+      "preload.js",
+      "database/**/*",
+      "ipc/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
     ],
     "extraResources": [
       {
         "from": "../my-app/.next/standalone",
-        "to": "app/my-app/.next/standalone",
-        "filter": ["**/*"]
+        "to": "app/.next/standalone"
+      },
+      {
+        "from": "../my-app/.next/static",
+        "to": "app/.next/static"
+      },
+      {
+        "from": "../my-app/public",
+        "to": "app/public"
       }
     ],
     "mac": {

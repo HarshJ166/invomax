@@ -71,6 +71,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+
 interface InvoiceItem {
   id: string;
   serialNumber: number;
@@ -972,6 +974,14 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
       return null;
     }
 
+    // Check if company has GST number and invoice amount >= 1,00,000
+    if (selectedCompany.gstNumber && totals.totalInvoiceAmount >= 100000) {
+      toast.warning("GST Registered Company - High Amount Alert", {
+        description: `Invoice amount ₹${totals.totalInvoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has reached ₹1,00,000. Please review before proceeding.`,
+        duration: 5000,
+      });
+    }
+
     const uniqueInvoiceNumber = await ensureInvoiceNumber();
     console.log("[InvoiceForm] Using invoice number:", uniqueInvoiceNumber);
 
@@ -1143,6 +1153,14 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     if (!selectedCompany) {
       alert("Please select a company.");
       return null;
+    }
+
+    // Check if company has GST number and invoice amount >= 1,00,000
+    if (selectedCompany.gstNumber && totals.totalInvoiceAmount >= 100000) {
+      toast.warning("GST Registered Company - High Amount Alert", {
+        description: `Invoice amount ₹${totals.totalInvoiceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} has reached ₹1,00,000. Please review before proceeding.`,
+        duration: 5000,
+      });
     }
 
     try {

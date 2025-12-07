@@ -19,7 +19,7 @@ function startNextServer() {
     let nextPath;
     
     if (app.isPackaged) {
-      nextPath = path.join(process.resourcesPath, "app", "my-app", ".next", "standalone", "my-app");
+      nextPath = path.join(process.resourcesPath, "app", ".next", "standalone", "my-app");
     } else {
       nextPath = path.join(__dirname, "..", "my-app", ".next", "standalone", "my-app");
     }
