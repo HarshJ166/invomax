@@ -85,14 +85,19 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  initializeDatabase();
-  setupIpcHandlers(ipcMain);
-  
-  if (!isDev) {
-    await startNextServer();
+  try {
+    await initializeDatabase();
+    setupIpcHandlers(ipcMain);
+    
+    if (!isDev) {
+      await startNextServer();
+    }
+    
+    createWindow();
+  } catch (error) {
+    console.error("Failed to start application:", error);
+    app.quit();
   }
-  
-  createWindow();
 });
 
 app.on("window-all-closed", () => {
