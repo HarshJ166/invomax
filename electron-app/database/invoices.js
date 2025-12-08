@@ -54,6 +54,26 @@ const createInvoice = (invoice) => {
     const sqliteDb = require("./db").getSqliteDatabase();
     console.log("[DB] Database connection obtained");
 
+    const companiesDb = require("./companies");
+    const clientsDb = require("./clients");
+
+    console.log("[DB] Validating foreign key references...");
+    const company = companiesDb.getCompanyById(invoice.companyId);
+    if (!company) {
+      const errorMessage = `Company with ID '${invoice.companyId}' does not exist`;
+      console.error("[DB]", errorMessage);
+      throw new Error(errorMessage);
+    }
+    console.log("[DB] Company validated:", company.companyName);
+
+    const client = clientsDb.getClientById(invoice.clientId);
+    if (!client) {
+      const errorMessage = `Client with ID '${invoice.clientId}' does not exist`;
+      console.error("[DB]", errorMessage);
+      throw new Error(errorMessage);
+    }
+    console.log("[DB] Client validated:", `${client.firstName} ${client.lastName}`);
+
     const values = {
       id: invoice.id,
       companyId: invoice.companyId,

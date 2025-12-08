@@ -1,0 +1,31 @@
+================================================================================
+[12/8/2025 11:26:32 PM] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "darwin",
+  "arch": "arm64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "/Users/harshjajal/Documents/invoice generator/electron-app",
+  "resourcesPath": "/Users/harshjajal/Documents/invoice generator/electron-app/node_modules/electron/dist/Electron.app/Contents/Resources"
+}
+[12/8/2025 11:26:32 PM] [INFO] Electron app ready event fired
+[12/8/2025 11:26:32 PM] [INFO] Initializing database
+[12/8/2025 11:26:32 PM] [INFO] Database initialized successfully
+[12/8/2025 11:26:32 PM] [INFO] Setting up IPC handlers
+[12/8/2025 11:26:32 PM] [INFO] IPC handlers setup complete
+[12/8/2025 11:26:32 PM] [INFO] Creating application window
+[12/8/2025 11:26:32 PM] [INFO] Creating main window
+[12/8/2025 11:26:32 PM] [INFO] Loading URL in window
+  Data: {
+  "url": "http://localhost:3000"
+}
+[12/8/2025 11:26:32 PM] [INFO] Application startup complete
+[12/8/2025 11:26:35 PM] [INFO] Window finished loading successfully
+[12/9/2025 12:27:05 AM] [INFO] Window finished loading successfully
+[12/9/2025 12:30:05 AM] [INFO] Main window closed
+[12/9/2025 12:30:05 AM] [INFO] All windows closed
+[12/9/2025 12:30:05 AM] [INFO] Closing database
+[12/9/2025 12:30:08 AM] [INFO] Application before-quit event
+================================================================================
