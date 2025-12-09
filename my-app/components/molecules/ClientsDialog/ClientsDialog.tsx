@@ -100,6 +100,25 @@ export function ClientsDialog({
     onSubmit(clientData);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const form = e.currentTarget.closest("form") || document.body;
+      const inputs = Array.from(
+        form.querySelectorAll(
+          'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]:not([disabled])'
+        )
+      ) as HTMLElement[];
+      const visibleInputs = inputs.filter((el) => {
+        return el.offsetParent !== null;
+      });
+      const index = visibleInputs.indexOf(e.currentTarget);
+      if (index > -1 && index < visibleInputs.length - 1) {
+        visibleInputs[index + 1].focus();
+      }
+    }
+  };
+
   const copyBillingToShipping = () => {
     onClientDataChange({
       ...clientData,
@@ -188,6 +207,7 @@ export function ClientsDialog({
                   }
                   placeholder="First Name"
                   required
+                  onKeyDown={handleKeyDown}
                 />
               </div>
               <div className="grid gap-2">
@@ -201,6 +221,7 @@ export function ClientsDialog({
                   }
                   placeholder="Last Name"
                   required
+                  onKeyDown={handleKeyDown}
                 />
               </div>
             </div>
@@ -214,6 +235,7 @@ export function ClientsDialog({
                     handleFieldChange("panNumber", e.target.value)
                   }
                   placeholder="Enter PAN Number"
+                  onKeyDown={handleKeyDown}
                 />
               </div>
               <div className="grid gap-2">
@@ -224,6 +246,7 @@ export function ClientsDialog({
                     handleFieldChange("companyName", e.target.value)
                   }
                   placeholder="Company Name"
+                  onKeyDown={handleKeyDown}
                 />
               </div>
             </div>
@@ -282,6 +305,7 @@ export function ClientsDialog({
                     value={clientData.gstin}
                     onChange={(e) => handleFieldChange("gstin", e.target.value)}
                     placeholder="GST Number"
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -292,6 +316,7 @@ export function ClientsDialog({
                       handleFieldChange("stateCode", e.target.value)
                     }
                     placeholder="State Code"
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </div>
@@ -358,6 +383,7 @@ export function ClientsDialog({
                         }
                         placeholder="Street Address"
                         rows={2}
+                        onKeyDown={handleKeyDown}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -372,6 +398,7 @@ export function ClientsDialog({
                         }
                         placeholder="Locality, Area"
                         rows={2}
+                        onKeyDown={handleKeyDown}
                       />
                     </div>
                   </div>
@@ -411,6 +438,7 @@ export function ClientsDialog({
                             )
                           }
                           placeholder="Phone"
+                          onKeyDown={handleKeyDown}
                         />
                       </div>
                     </div>
@@ -428,6 +456,7 @@ export function ClientsDialog({
                             handleFieldChange("billingEmail", e.target.value)
                           }
                           placeholder="Email"
+                          onKeyDown={handleKeyDown}
                         />
                       </div>
                     </div>
@@ -445,6 +474,7 @@ export function ClientsDialog({
                             )
                           }
                           placeholder="Phone"
+                          onKeyDown={handleKeyDown}
                         />
                       </div>
                     </div>

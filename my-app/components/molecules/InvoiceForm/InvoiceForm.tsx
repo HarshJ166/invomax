@@ -1314,8 +1314,27 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const form = e.currentTarget.closest("form") || document.body;
+      const inputs = Array.from(
+        form.querySelectorAll(
+          'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]:not([disabled])'
+        )
+      ) as HTMLElement[];
+      const visibleInputs = inputs.filter((el) => {
+        return el.offsetParent !== null;
+      });
+      const index = visibleInputs.indexOf(e.currentTarget);
+      if (index > -1 && index < visibleInputs.length - 1) {
+        visibleInputs[index + 1].focus();
+      }
+    }
+  };
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="w-full space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Tax Invoice</CardTitle>
@@ -1439,7 +1458,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>
                     Invoice Number <span className="text-destructive">*</span>
@@ -1451,6 +1470,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                     }
                 placeholder="Invoice Number"
                 required
+                onKeyDown={handleKeyDown}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1464,11 +1484,12 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                       handleFieldChange("invoiceDate", e.target.value)
                     }
                     required
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Delivery Note</Label>
                   <Input
@@ -1477,6 +1498,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                       handleFieldChange("deliveryNote", e.target.value)
                     }
                     placeholder="Delivery Note"
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1487,11 +1509,12 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                       handleFieldChange("modeOfPayment", e.target.value)
                     }
                     placeholder="Payment Terms"
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Supplier&apos;s Reference</Label>
                   <Input
@@ -1500,6 +1523,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                       handleFieldChange("supplierReference", e.target.value)
                     }
                     placeholder="Supplier's Ref"
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1510,6 +1534,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                       handleFieldChange("destination", e.target.value)
                     }
                     placeholder="Destination"
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </div>
@@ -1635,6 +1660,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                                 ? "Description"
                                 : "Item name and description"
                             }
+                            onKeyDown={handleKeyDown}
                           />
                           <Input
                             className="mt-2"
@@ -1643,6 +1669,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                               handleItemChange(index, "batch", e.target.value)
                             }
                             placeholder="Batch (optional)"
+                            onKeyDown={handleKeyDown}
                           />
                         </td>
                       <td className="border p-2">
@@ -1652,6 +1679,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                             handleItemChange(index, "hsnCode", e.target.value)
                           }
                           placeholder="HSN/SAC"
+                          onKeyDown={handleKeyDown}
                         />
                       </td>
                       <td className="border p-2">
@@ -1674,6 +1702,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                                 ? "border-destructive focus-visible:ring-destructive"
                                 : ""
                             }
+                            onKeyDown={handleKeyDown}
                           />
                           {isOutOfStock && availableQty !== null && (
                             <p className="text-xs text-destructive font-medium">
@@ -1690,6 +1719,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                             handleItemChange(index, "unit", e.target.value)
                           }
                           placeholder="Unit"
+                          onKeyDown={handleKeyDown}
                         />
                       </td>
                       <td className="border p-2">
@@ -1706,6 +1736,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                           placeholder="0.00"
                           min="0"
                           step="0.01"
+                          onKeyDown={handleKeyDown}
                         />
                       </td>
                       <td className="border p-2">
@@ -1715,6 +1746,7 @@ export function InvoiceForm({ onRefreshRef, editInvoiceId }: InvoiceFormProps) {
                             handleItemChange(index, "per", e.target.value)
                           }
                           placeholder="Per"
+                          onKeyDown={handleKeyDown}
                         />
                       </td>
                       <td className="border p-2">

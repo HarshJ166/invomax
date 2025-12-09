@@ -128,6 +128,25 @@ export function CompaniesDialog({
     onSubmit(companyData);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const form = e.currentTarget.closest("form") || document.body;
+      const inputs = Array.from(
+        form.querySelectorAll(
+          'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button[type="submit"]:not([disabled])'
+        )
+      ) as HTMLElement[];
+      const visibleInputs = inputs.filter((el) => {
+        return el.offsetParent !== null;
+      });
+      const index = visibleInputs.indexOf(e.currentTarget);
+      if (index > -1 && index < visibleInputs.length - 1) {
+        visibleInputs[index + 1].focus();
+      }
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[90%] max-h-[90vh] overflow-y-auto">
@@ -151,6 +170,7 @@ export function CompaniesDialog({
                 }
                 placeholder="Enter company name"
                 required
+                onKeyDown={handleKeyDown}
               />
             </div>
             <div className="grid gap-2">
@@ -165,6 +185,7 @@ export function CompaniesDialog({
                 }
                 placeholder="Enter proprietor name"
                 required
+                onKeyDown={handleKeyDown}
               />
             </div>
             <div className="grid gap-2">
@@ -178,6 +199,7 @@ export function CompaniesDialog({
                 placeholder="Enter complete address"
                 rows={2}
                 required
+                onKeyDown={handleKeyDown}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -240,6 +262,7 @@ export function CompaniesDialog({
                     placeholder="Enter email address"
                     className="pl-10"
                     required
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </div>
@@ -259,6 +282,7 @@ export function CompaniesDialog({
                     placeholder="Enter phone number"
                     className="pl-10"
                     required
+                    onKeyDown={handleKeyDown}
                   />
                 </div>
               </div>
@@ -273,6 +297,7 @@ export function CompaniesDialog({
                     handleFieldChange("gstNumber", e.target.value)
                   }
                   placeholder="Enter GST number (optional)"
+                  onKeyDown={handleKeyDown}
                 />
               </div>
               <div className="grid gap-2">
@@ -288,6 +313,7 @@ export function CompaniesDialog({
                   }
                   placeholder="Enter invoice prefix"
                   required
+                  onKeyDown={handleKeyDown}
                 />
               </div>
             </div>
@@ -343,6 +369,7 @@ export function CompaniesDialog({
                       }
                       placeholder="Enter account number"
                       required
+                      onKeyDown={handleKeyDown}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -357,6 +384,7 @@ export function CompaniesDialog({
                       }
                       placeholder="Enter bank name"
                       required
+                      onKeyDown={handleKeyDown}
                     />
                   </div>
                 </div>
@@ -373,6 +401,7 @@ export function CompaniesDialog({
                       }
                       placeholder="Enter IFSC code"
                       required
+                      onKeyDown={handleKeyDown}
                     />
                   </div>
                   <div className="grid gap-2">
@@ -387,6 +416,7 @@ export function CompaniesDialog({
                       }
                       placeholder="Enter branch name"
                       required
+                      onKeyDown={handleKeyDown}
                     />
                   </div>
                 </div>

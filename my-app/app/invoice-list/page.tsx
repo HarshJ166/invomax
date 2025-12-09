@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import * as XLSX from "xlsx";
 import { DataTable, Column } from "@/components/molecules/DataTable/DataTable";
 import { RefreshButton } from "@/components/molecules/RefreshButton/RefreshButton";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
@@ -253,6 +254,31 @@ export default function InvoiceListPage() {
     } catch (error) {
       console.error("Error deleting invoice:", error);
       alert("Failed to delete invoice. Please try again.");
+    }
+  };
+
+  const handleExportToExcel = () => {
+    try {
+      const dataToExport = invoicesWithDetails.map((inv) => ({
+        "Company Name": inv.companyName,
+        "Client Name": inv.clientName,
+        "Invoice Number": inv.invoiceNumber,
+        "Invoice Date": new Date(inv.invoiceDate).toLocaleDateString("en-IN"),
+        "Subtotal": inv.subtotal,
+        "Total Tax": inv.taxAmount,
+        "Total Amount": inv.totalAmount,
+        "Status": inv.status.toUpperCase(),
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Invoices");
+      
+      const fileName = `Invoices_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      alert("Failed to export to Excel.");
     }
   };
 
@@ -605,7 +631,7 @@ export default function InvoiceListPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="w-full h-full p-4 md:p-6 lg:p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-black dark:text-white">
             Invoices & Quotations
@@ -619,12 +645,18 @@ export default function InvoiceListPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="w-full h-full p-4 md:p-6 lg:p-8">
       <div className="mb-6 flex items-start justify-between">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           Invoices & Quotations
         </h1>
-        <RefreshButton onRefresh={loadData} />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportToExcel}>
+            <DownloadIcon className="size-4 mr-2" />
+            Export to Excel
+          </Button>
+          <RefreshButton onRefresh={loadData} />
+        </div>
       </div>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>

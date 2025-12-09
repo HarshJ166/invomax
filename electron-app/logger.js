@@ -16,6 +16,34 @@ class Logger {
     if (!fs.existsSync(this.logDir)) {
       fs.mkdirSync(this.logDir, { recursive: true });
     }
+    this.cleanOldLogs();
+  }
+
+  cleanOldLogs() {
+    try {
+      const MAX_AGE_DAYS = 30;
+      const files = fs.readdirSync(this.logDir);
+      const now = Date.now();
+      const msPerDay = 24 * 60 * 60 * 1000;
+
+      files.forEach(file => {
+        if (file.endsWith('.log')) {
+          const filePath = path.join(this.logDir, file);
+          const stats = fs.statSync(filePath);
+          const ageInDays = (now - stats.mtimeMs) / msPerDay;
+
+          if (ageInDays > MAX_AGE_DAYS) {
+            fs.unlinkSync(filePath);
+            const deletedMsg = `[${this.getTimestamp()}] [INFO] Deleted old log file: ${file}`;
+            console.log(deletedMsg);
+            // We can't use this.info() here recursively safely if we are strictly inside init, 
+            // but since we append updates to current log file, it's fine to just proceed.
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Failed to clean old logs:', error);
+    }
   }
 
   getDateString() {

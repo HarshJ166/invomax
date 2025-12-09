@@ -17,7 +17,7 @@ function InvoicePageContent() {
   }, []);
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="w-full h-full p-4 md:p-6 lg:p-8">
       <div className="mb-6 flex items-start justify-between">
         <h1 className="text-3xl font-bold text-black dark:text-white">
           {editInvoiceId ? "Edit Invoice" : "Create Invoice"}
@@ -32,7 +32,7 @@ function InvoicePageContent() {
 export default function InvoicePage() {
   return (
     <React.Suspense fallback={
-      <div className="container mx-auto py-8 px-4">
+      <div className="w-full h-full p-4 md:p-6 lg:p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-black dark:text-white">
             Create Invoice

@@ -20,15 +20,11 @@ export function RefreshButton({
 }: RefreshButtonProps) {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
-    try {
-      await onRefresh();
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
+    // As per user request, perform a full page reload to simulate Ctrl+R
+    // ensuring all states and data are completely refreshed.
+    window.location.reload();
   };
 
   return (

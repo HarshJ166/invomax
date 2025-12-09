@@ -167,7 +167,7 @@ export function DataTable<T extends { id?: string | number }>({
           </Button>
         </div>
       )}
-      <div className="rounded-md border overflow-hidden">
+      <div className="rounded-md border overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>

@@ -1,0 +1,168 @@
+================================================================================
+[9/12/2025 8:47:46 am] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "win32",
+  "arch": "x64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app",
+  "resourcesPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app\\node_modules\\electron\\dist\\resources"
+}
+[9/12/2025 8:47:47 am] [INFO] Electron app ready event fired
+[9/12/2025 8:47:47 am] [INFO] Initializing database
+[9/12/2025 8:47:47 am] [INFO] Database initialized successfully
+[9/12/2025 8:47:47 am] [INFO] Setting up IPC handlers
+[9/12/2025 8:47:47 am] [INFO] IPC handlers setup complete
+[9/12/2025 8:47:47 am] [INFO] Starting Next.js server
+[9/12/2025 8:47:47 am] [INFO] Development mode: Skipping Next.js server startup
+[9/12/2025 8:47:47 am] [INFO] Next.js server started successfully
+[9/12/2025 8:47:47 am] [INFO] Creating application window
+[9/12/2025 8:47:47 am] [INFO] Creating main window
+[9/12/2025 8:47:47 am] [INFO] Loading URL in window
+  Data: {
+  "url": "http://localhost:3000"
+}
+[9/12/2025 8:47:47 am] [INFO] Application startup complete
+[9/12/2025 8:47:51 am] [INFO] Window finished loading successfully
+[9/12/2025 8:48:53 am] [INFO] Main window closed
+[9/12/2025 8:48:53 am] [INFO] All windows closed
+[9/12/2025 8:48:53 am] [INFO] Closing database
+[9/12/2025 8:48:53 am] [INFO] Quitting application
+[9/12/2025 8:48:53 am] [INFO] Application before-quit event
+================================================================================
+================================================================================
+[9/12/2025 8:49:00 am] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "win32",
+  "arch": "x64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app",
+  "resourcesPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app\\node_modules\\electron\\dist\\resources"
+}
+[9/12/2025 8:49:00 am] [INFO] Electron app ready event fired
+[9/12/2025 8:49:00 am] [INFO] Initializing database
+[9/12/2025 8:49:00 am] [INFO] Database initialized successfully
+[9/12/2025 8:49:00 am] [INFO] Setting up IPC handlers
+[9/12/2025 8:49:00 am] [INFO] IPC handlers setup complete
+[9/12/2025 8:49:00 am] [INFO] Starting Next.js server
+[9/12/2025 8:49:00 am] [INFO] Development mode: Skipping Next.js server startup
+[9/12/2025 8:49:00 am] [INFO] Next.js server started successfully
+[9/12/2025 8:49:00 am] [INFO] Creating application window
+[9/12/2025 8:49:00 am] [INFO] Creating main window
+[9/12/2025 8:49:00 am] [INFO] Loading URL in window
+  Data: {
+  "url": "http://localhost:3000"
+}
+[9/12/2025 8:49:00 am] [INFO] Application startup complete
+[9/12/2025 8:49:05 am] [INFO] Window finished loading successfully
+================================================================================
+[9/12/2025 8:51:00 am] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "win32",
+  "arch": "x64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app",
+  "resourcesPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app\\node_modules\\electron\\dist\\resources"
+}
+[9/12/2025 8:51:00 am] [INFO] Electron app ready event fired
+[9/12/2025 8:51:00 am] [INFO] Initializing database
+[9/12/2025 8:51:00 am] [INFO] Database initialized successfully
+[9/12/2025 8:51:00 am] [INFO] Setting up IPC handlers
+[9/12/2025 8:51:00 am] [INFO] IPC handlers setup complete
+[9/12/2025 8:51:00 am] [INFO] Starting Next.js server
+[9/12/2025 8:51:00 am] [INFO] Development mode: Skipping Next.js server startup
+[9/12/2025 8:51:00 am] [INFO] Next.js server started successfully
+[9/12/2025 8:51:00 am] [INFO] Creating application window
+[9/12/2025 8:51:00 am] [INFO] Creating main window
+[9/12/2025 8:51:00 am] [INFO] Loading URL in window
+  Data: {
+  "url": "http://localhost:3000"
+}
+[9/12/2025 8:51:00 am] [INFO] Application startup complete
+[9/12/2025 8:51:05 am] [INFO] Window finished loading successfully
+================================================================================
+[9/12/2025 8:57:09 am] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "win32",
+  "arch": "x64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app",
+  "resourcesPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app\\node_modules\\electron\\dist\\resources"
+}
+[9/12/2025 8:57:09 am] [INFO] Second instance attempted to launch
+[9/12/2025 8:57:09 am] [WARN] Another instance is already running. Quitting.
+[9/12/2025 8:57:27 am] [INFO] Main window closed
+[9/12/2025 8:57:27 am] [INFO] All windows closed
+[9/12/2025 8:57:27 am] [INFO] Closing database
+[9/12/2025 8:57:27 am] [INFO] Quitting application
+[9/12/2025 8:57:27 am] [INFO] Application before-quit event
+================================================================================
+================================================================================
+[9/12/2025 8:57:34 am] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "win32",
+  "arch": "x64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app",
+  "resourcesPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app\\node_modules\\electron\\dist\\resources"
+}
+[9/12/2025 8:57:34 am] [INFO] Electron app ready event fired
+[9/12/2025 8:57:34 am] [INFO] Initializing database
+[9/12/2025 8:57:34 am] [INFO] Database initialized successfully
+[9/12/2025 8:57:34 am] [INFO] Setting up IPC handlers
+[9/12/2025 8:57:34 am] [INFO] IPC handlers setup complete
+[9/12/2025 8:57:34 am] [INFO] Starting Next.js server
+[9/12/2025 8:57:34 am] [INFO] Development mode: Skipping Next.js server startup
+[9/12/2025 8:57:34 am] [INFO] Next.js server started successfully
+[9/12/2025 8:57:34 am] [INFO] Creating application window
+[9/12/2025 8:57:34 am] [INFO] Creating main window
+[9/12/2025 8:57:34 am] [INFO] Loading URL in window
+  Data: {
+  "url": "http://localhost:3000"
+}
+[9/12/2025 8:57:34 am] [INFO] Application startup complete
+[9/12/2025 8:57:38 am] [INFO] Window finished loading successfully
+[9/12/2025 9:04:23 am] [INFO] Window finished loading successfully
+================================================================================
+[9/12/2025 9:06:37 am] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "win32",
+  "arch": "x64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app",
+  "resourcesPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app\\node_modules\\electron\\dist\\resources"
+}
+[9/12/2025 9:06:37 am] [INFO] Second instance attempted to launch
+[9/12/2025 9:06:37 am] [WARN] Another instance is already running. Quitting.
+================================================================================
+[9/12/2025 9:09:09 am] [INFO] Application Starting
+  Data: {
+  "isDev": true,
+  "isPackaged": false,
+  "platform": "win32",
+  "arch": "x64",
+  "electronVersion": "33.0.0",
+  "nodeVersion": "20.18.0",
+  "appPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app",
+  "resourcesPath": "C:\\Users\\Harsh Jajal\\Documents\\coding\\invoice-generator\\electron-app\\node_modules\\electron\\dist\\resources"
+}
+[9/12/2025 9:09:09 am] [INFO] Second instance attempted to launch
+[9/12/2025 9:09:09 am] [WARN] Another instance is already running. Quitting.
+[9/12/2025 9:09:19 am] [INFO] Window finished loading successfully
